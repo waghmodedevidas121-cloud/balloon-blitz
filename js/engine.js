@@ -13,14 +13,13 @@ var currentWeapon = "pistol", weaponTimer = 0, weaponShownSec = -1;
 function sound() { return BB.Audio.sound; }
 function effectsOn() { return BB.Save.data.settings.effects !== false; }
 
-/* ---------- VECTOR BALLOON SPRITES (2x supersampled = pixel-perfect on any DPI) ---------- */
+/* ---------- MODERN MATERIAL BALLOONS (2024 matte grade — no glow, one crisp specular) ---------- */
 var SPRITES = {};
 function hexToRgb(h) {
   var v = h.replace("#", "");
   return { r: parseInt(v.substr(0, 2), 16), g: parseInt(v.substr(2, 2), 16), b: parseInt(v.substr(4, 2), 16) };
 }
 function mixc(hex, target, t) {
-  // blend hex toward target rgb with factor t (0..1). target = [r,g,b]
   var c = hexToRgb(hex);
   var f = function (a, b) { return Math.round(a + (b - a) * t); };
   return "rgb(" + f(c.r, target[0]) + "," + f(c.g, target[1]) + "," + f(c.b, target[2]) + ")";
@@ -28,17 +27,16 @@ function mixc(hex, target, t) {
 function getSprite(key, color, kind, radius) {
   var id = key + "|" + kind + "|" + radius;
   if (SPRITES[id]) return SPRITES[id];
-  var SS = 2;                               // supersample factor for crisp edges
-  var S = Math.ceil(radius * 2 * 1.5 + 12);  // logical sprite size (body + knot only)
+  var SS = 2;
+  var S = Math.ceil(radius * 2 * 1.5 + 12);
   var W = Math.ceil(S * SS);
   var cv = document.createElement("canvas"); cv.width = W; cv.height = W;
   var g = cv.getContext("2d"); g.scale(SS, SS);
   var cx = S / 2, cy = S * 0.47, r = radius;
 
-  // ---- balloon silhouette: true pear/teardrop (wide top, tapered neck) ----
+  // silhouette: round crown, clean taper into neck (single smooth motion)
   function body() {
     g.beginPath();
-    // start at neck top-left, sweep up over the crown, down the right, into the neck
     g.moveTo(cx - r * 0.12, cy + r * 1.05);
     g.bezierCurveTo(cx - r * 0.95, cy + r * 0.82, cx - r * 1.08, cy - r * 0.25, cx - r * 0.98, cy - r * 0.42);
     g.bezierCurveTo(cx - r * 0.86, cy - r * 1.05, cx - r * 0.34, cy - r * 1.22, cx, cy - r * 1.22);
@@ -47,75 +45,53 @@ function getSprite(key, color, kind, radius) {
     g.closePath();
   }
 
-  // ---- string: drawn live in Balloon.draw() (sways with wobble — no clipping) ----
-
-  // ---- fill pass ----
+  // base fill: vertical matte grade (sky-lit top, grounded bottom)
   body();
+  var grad = g.createLinearGradient(cx, cy - r * 1.22, cx, cy + r * 1.05);
   if (kind === "bomb") {
-    var bg = g.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.1, cx, cy, r * 1.25);
-    bg.addColorStop(0, "#2a2e42"); bg.addColorStop(0.6, "#1b1e2e"); bg.addColorStop(1, "#0b0d18");
-    g.fillStyle = bg; g.fill();
+    grad.addColorStop(0, "#343951"); grad.addColorStop(0.55, "#20232f"); grad.addColorStop(1, "#121420");
   } else if (kind === "gift") {
-    var gg = g.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.1, cx, cy, r * 1.25);
-    gg.addColorStop(0, "#432a63"); gg.addColorStop(0.55, "#2a1540"); gg.addColorStop(1, "#120820");
-    g.fillStyle = gg; g.fill();
+    grad.addColorStop(0, "#5a3b85"); grad.addColorStop(0.55, "#3a2160"); grad.addColorStop(1, "#241340");
   } else {
-    // realistic latex: light falls top-left, deepens bottom-right, subtle bounce light bottom
-    var grad = g.createRadialGradient(cx - r * 0.42, cy - r * 0.5, r * 0.05, cx + r * 0.12, cy + r * 0.15, r * 1.35);
-    grad.addColorStop(0.00, mixc(color, [255, 255, 255], 0.72));
-    grad.addColorStop(0.18, mixc(color, [255, 255, 255], 0.38));
-    grad.addColorStop(0.42, color);
-    grad.addColorStop(0.80, mixc(color, [8, 10, 20], 0.62));
-    grad.addColorStop(1.00, mixc(color, [5, 6, 14], 0.82));
-    g.fillStyle = grad; g.fill();
-    // bounce light (bottom rim picks up scene light)
-    g.save(); body(); g.clip();
-    var bl = g.createRadialGradient(cx, cy + r * 0.95, r * 0.05, cx, cy + r * 0.95, r * 0.75);
-    bl.addColorStop(0, "rgba(255,255,255,.14)"); bl.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = bl; g.fillRect(cx - r * 1.3, cy - r * 1.3, r * 2.6, r * 2.6);
-    g.restore();
+    grad.addColorStop(0.00, mixc(color, [255, 255, 255], 0.30));
+    grad.addColorStop(0.45, color);
+    grad.addColorStop(1.00, mixc(color, [12, 14, 26], 0.55));
   }
+  g.fillStyle = grad; g.fill();
 
-  // ---- soft window highlight (single, feathered — no hard sticker gloss) ----
+  // AO: soft occlusion hugging the neck (volume without vignette walls)
   g.save(); body(); g.clip();
-  var hi = g.createRadialGradient(cx - r * 0.42, cy - r * 0.52, 0, cx - r * 0.42, cy - r * 0.52, r * 0.75);
-  hi.addColorStop(0, "rgba(255,255,255,.55)");
-  hi.addColorStop(0.55, "rgba(255,255,255,.18)");
-  hi.addColorStop(1, "rgba(255,255,255,0)");
-  g.fillStyle = hi;
-  g.beginPath(); g.ellipse(cx - r * 0.42, cy - r * 0.52, r * 0.52, r * 0.38, -0.5, 0, Math.PI * 2); g.fill();
+  var ao = g.createRadialGradient(cx, cy + r * 0.9, r * 0.1, cx, cy + r * 0.9, r * 0.85);
+  ao.addColorStop(0, "rgba(0,0,0,.20)"); ao.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = ao; g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
   g.restore();
 
-  // ---- inner edge darkening (vignette for volume) ----
+  // THE specular: one crisp window reflection, feathered edge (Apple-grade)
   g.save(); body(); g.clip();
-  var vg = g.createRadialGradient(cx, cy, r * 0.55, cx, cy, r * 1.12);
-  vg.addColorStop(0, "rgba(0,0,0,0)");
-  vg.addColorStop(1, "rgba(0,0,0,.28)");
-  g.fillStyle = vg; g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
+  g.translate(cx - r * 0.40, cy - r * 0.58);
+  g.rotate(-0.55);
+  var spec = g.createRadialGradient(0, 0, 0, 0, 0, 1);
+  spec.addColorStop(0, "rgba(255,255,255,.92)");
+  spec.addColorStop(0.62, "rgba(255,255,255,.50)");
+  spec.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = spec;
+  g.beginPath(); g.ellipse(0, 0, r * 0.30, r * 0.16, 0, 0, Math.PI * 2); g.fill();
   g.restore();
 
-  // ---- special halo (gold/freeze only — restrained) ----
-  if (kind === "gold" || kind === "freeze") {
-    g.save();
-    g.shadowColor = kind === "gold" ? "rgba(255,215,0,.9)" : "rgba(0,245,212,.9)";
-    g.shadowBlur = 10;
-    g.strokeStyle = kind === "gold" ? "rgba(255,225,120,.5)" : "rgba(140,250,235,.5)";
-    g.lineWidth = 1.5; body(); g.stroke();
-    g.restore();
-  }
-  // bomb ring
-  if (kind === "bomb") {
-    g.save(); g.shadowColor = "rgba(255,60,80,.9)"; g.shadowBlur = 10;
-    g.strokeStyle = "rgba(255,70,90,.55)"; g.lineWidth = 1.5; body(); g.stroke();
-    g.restore();
-  }
+  // hairline bottom-edge definition (grounds the shape, no glow)
+  g.save(); body(); g.clip();
+  g.strokeStyle = "rgba(0,0,0,.22)"; g.lineWidth = r * 0.10;
+  g.beginPath();
+  g.arc(cx, cy + r * 0.15, r * 1.02, Math.PI * 0.15, Math.PI * 0.85);
+  g.stroke();
+  g.restore();
 
-  // ---- knot + neck tie ----
+  // knot
   g.beginPath();
   g.moveTo(cx - r * 0.10, cy + r * 1.06);
   g.quadraticCurveTo(cx, cy + r * 1.22, cx + r * 0.10, cy + r * 1.06);
   g.closePath();
-  g.fillStyle = kind === "bomb" ? "#ff4757" : (kind === "gift" ? "#a86bff" : mixc(color, [255, 255, 255], 0.12));
+  g.fillStyle = kind === "bomb" ? "#3a3f58" : (kind === "gift" ? "#7b4fd0" : mixc(color, [12, 14, 26], 0.35));
   g.fill();
 
   SPRITES[id] = { cv: cv, half: S / 2, ss: SS };
@@ -125,13 +101,13 @@ function drawSprite(x, y, radius, scale, key, color, kind) {
   var sp = getSprite(key, color, kind, radius);
   ctx.save();
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
-  // supersampled sprite drawn back to logical size (dest = logical S, not physical px)
   var k = 0.6 + 0.4 * scale;
   ctx.translate(x, y); ctx.scale(k, k);
   var S = sp.cv.width / sp.ss;
   ctx.drawImage(sp.cv, -S / 2, -S / 2 * 0.94, S, S);
   ctx.restore();
 }
+
 var dragStart = {};
 var lastMovePop = 0;
 var inputLockUntil = 0;
@@ -668,7 +644,6 @@ function loop(curT) {
     if (feverTimer <= 0) endFever();
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  drawBokeh(curT);
   if (shakeDuration > 0) {
     shakeDuration -= dt;
     ctx.translate((Math.random() - 0.5) * shakeIntensity, (Math.random() - 0.5) * shakeIntensity);
@@ -679,8 +654,8 @@ function loop(curT) {
   if (slowMoTimer > 0) slowMoTimer -= dt;
   if (lifeGrace > 0) lifeGrace -= dt;
   var frozen = (gameState === "PAUSED");
-  if (slowMoTimer > 0) { ctx.fillStyle = "rgba(0,245,212,.07)"; ctx.fillRect(0, 0, width, height); ctx.fillStyle = "rgba(0,245,212,.04)"; ctx.fillRect(0, height * 0.22, width, height * 0.78); }
-  if (isFever) { var h = (curT * 0.15) % 360; ctx.fillStyle = "hsla(" + h + ",85%,55%,.07)"; ctx.fillRect(0, 0, width, height); }
+  if (slowMoTimer > 0) { ctx.fillStyle = "rgba(0,245,212,.05)"; ctx.fillRect(0, 0, width, height); ctx.fillStyle = "rgba(0,245,212,.03)"; ctx.fillRect(0, height * 0.22, width, height * 0.78); }
+  if (isFever) { var h = (curT * 0.15) % 360; ctx.fillStyle = "hsla(" + h + ",70%,55%,.04)"; ctx.fillRect(0, 0, width, height); }
   for (var i = 0; i < balloons.length; i++) { var b = balloons[i]; if (!frozen) b.update(dt, scale); if (!b.popped) b.draw(); }
   for (var d = powerupDrops.length - 1; d >= 0; d--) {
     var dr = powerupDrops[d]; if (!frozen) dr.update(dt); dr.draw();
@@ -711,38 +686,6 @@ function loop(curT) {
   requestAnimationFrame(loop);
 }
 var lastT = performance.now();
-/* subtle floating bokeh dots — depth without clutter (mobile-light) */
-var bokeh = null;
-function drawBokeh(t) {
-  var mobile = width < 600;
-  var n = mobile ? 6 : 12;
-  if (!bokeh) {
-    bokeh = [];
-    for (var i = 0; i < n; i++) {
-      bokeh.push({
-        x: Math.random() * width, y: Math.random() * height,
-        r: mobile ? (10 + Math.random() * 18) : (14 + Math.random() * 32),
-        sp: 6 + Math.random() * 14, ph: Math.random() * Math.PI * 2
-      });
-    }
-  }
-  if (bokeh.length !== n) { bokeh = null; return; }
-  var on = BB.Save.data.settings.effects !== false;
-  if (!on) return;
-  ctx.save(); ctx.globalCompositeOperation = "lighter";
-  for (var j = 0; j < bokeh.length; j++) {
-    var b = bokeh[j];
-    var yy = (b.y - t * 0.001 * b.sp) % (height + b.r * 2);
-    if (yy < -b.r * 2) yy += height + b.r * 2;
-    var al = 0.025 + 0.025 * Math.sin(t * 0.001 + b.ph);
-    var gr = ctx.createRadialGradient(b.x, yy, 0, b.x, yy, b.r);
-    gr.addColorStop(0, "rgba(120,180,255," + al.toFixed(3) + ")");
-    gr.addColorStop(1, "rgba(120,180,255,0)");
-    ctx.fillStyle = gr;
-    ctx.beginPath(); ctx.arc(b.x, yy, b.r, 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.restore();
-}
 function resizeCanvas() {
   width = window.innerWidth; height = window.innerHeight;
   dpr = Math.min(window.devicePixelRatio || 1, 2.5);

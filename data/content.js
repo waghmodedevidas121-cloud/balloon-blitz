@@ -14,13 +14,13 @@ BB.Content = {
     { id: 10, target: 2000, time: 40, desc: "Score 2,000 pts", type: "score" }
   ],
   SPECS: {
-    RED:    { key: "RED",    color: "#ff3366", points: 10,  speed: 2.2, r: 30, prob: 0.32 },
-    BLUE:   { key: "BLUE",   color: "#33ccff", points: 20,  speed: 2.7, r: 28, prob: 0.23 },
-    GREEN:  { key: "GREEN",  color: "#33ff77", points: 30,  speed: 3.1, r: 26, prob: 0.18 },
-    GOLD:   { key: "GOLD",   color: "#ffd700", points: 100, speed: 4.5, r: 24, prob: 0.08, isGold: true },
+    RED:    { key: "RED",    color: "#ff5a6e", points: 10,  speed: 2.2, r: 30, prob: 0.32 },
+    BLUE:   { key: "BLUE",   color: "#3e9bff", points: 20,  speed: 2.7, r: 28, prob: 0.23 },
+    GREEN:  { key: "GREEN",  color: "#2fd566", points: 30,  speed: 3.1, r: 26, prob: 0.18 },
+    GOLD:   { key: "GOLD",   color: "#ffc83d", points: 100, speed: 4.5, r: 24, prob: 0.08, isGold: true },
     BOMB:   { key: "BOMB",   color: "#161826", points: 0,   speed: 2.0, r: 32, prob: 0.07, isBomb: true },
-    FREEZE: { key: "FREEZE", color: "#00f5d4", points: 25,  speed: 2.3, r: 26, prob: 0.05, isFreeze: true },
-    GIFT:   { key: "GIFT",   color: "#c26bff", points: 15,  speed: 2.6, r: 27, prob: 0.07, isGift: true }
+    FREEZE: { key: "FREEZE", color: "#25d3c2", points: 25,  speed: 2.3, r: 26, prob: 0.05, isFreeze: true },
+    GIFT:   { key: "GIFT",   color: "#b565f7", points: 15,  speed: 2.6, r: 27, prob: 0.07, isGift: true }
   },
   SKINS: [
     { id: "default", name: "Classic Pop", cost: { coins: 0 }, colors: null, desc: "Original arcade look" },

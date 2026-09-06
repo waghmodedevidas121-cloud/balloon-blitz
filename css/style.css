@@ -13,13 +13,13 @@ html,body{width:100%;height:100%;overflow:hidden;position:fixed;background:radia
 @keyframes bgBreathe{from{opacity:.6}to{opacity:.95}}
 .bg-balloon::after{content:'';position:absolute;left:22%;top:14%;width:26%;height:16%;background:rgba(255,255,255,.75);border-radius:50%;transform:rotate(-18deg)}
 @keyframes floatUp{from{transform:translateY(0)}50%{transform:translateY(-68vh) translateX(18px)}to{transform:translateY(-130vh)}}
-#feverVignette{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .35s;box-shadow:inset 0 0 0 3px rgba(255,210,63,.9),inset 0 0 90px rgba(255,8,68,.45)}
+#feverVignette{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .35s;box-shadow:inset 0 0 0 2px rgba(255,210,63,.55),inset 0 0 40px rgba(255,8,68,.18)}
 body.fever-active #feverVignette{opacity:1;animation:feverPulse 1s ease-in-out infinite}
 @keyframes feverPulse{50%{filter:brightness(1.25)}}
 #flashOverlay{position:absolute;inset:0;z-index:4;pointer-events:none;background:#fff;opacity:0}
 #announceBanner{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%) scale(.8);z-index:16;pointer-events:none;text-align:center;opacity:0;transition:opacity .18s,transform .18s}
 #announceBanner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-#announceBanner .ann-main{font-size:clamp(26px,7vw,46px);font-weight:900;text-shadow:0 4px 24px rgba(0,0,0,.7),0 0 24px currentColor}
+#announceBanner .ann-main{font-size:clamp(26px,7vw,46px);font-weight:900;text-shadow:0 2px 12px rgba(0,0,0,.65)}
 #announceBanner .ann-sub{margin-top:6px;font-size:clamp(11px,3vw,14px);font-weight:800;letter-spacing:2px;color:#e6ecff;text-transform:uppercase}
 .overlay-view{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(5,7,18,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:25;color:#fff;text-align:center;padding:max(14px,var(--sat)) max(14px,var(--sar)) max(14px,var(--sab)) max(14px,var(--sal));transition:opacity .22s,transform .22s}
 .overlay-view.hidden{opacity:0;pointer-events:none;transform:scale(.96)}
@@ -41,8 +41,8 @@ body.fever-active #feverVignette{opacity:1;animation:feverPulse 1s ease-in-out i
 .hh-logo-main{display:block;font-size:clamp(52px,15vw,86px);font-weight:900;letter-spacing:4px;background:linear-gradient(180deg,#fff 8%,#ffd23f 34%,#ff5e3d 58%,#ff0844 82%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 14px rgba(255,8,68,.65));animation:hhNeon 2.6s ease-in-out infinite}
 @keyframes hhNeon{50%{filter:drop-shadow(0 0 22px rgba(255,120,60,.9))}}
 .hh-tag{margin-top:10px;font-size:11px;font-weight:800;letter-spacing:4px;color:var(--cyan);background:rgba(0,245,212,.08);border:1px solid rgba(0,245,212,.28);padding:5px 16px;border-radius:20px}
-.hh-play{position:relative;z-index:1;margin:18px 0 14px;width:min(100%,340px);padding:19px;border:none;border-radius:20px;font-size:24px;font-weight:900;letter-spacing:3px;color:#fff;background:linear-gradient(135deg,#ff0844,#ff6a3d 55%,#ffb199);box-shadow:0 14px 36px rgba(255,8,68,.5),inset 0 2px 0 rgba(255,255,255,.4);cursor:pointer;touch-action:manipulation;animation:hhBreathe 2.2s ease-in-out infinite}
-@keyframes hhBreathe{50%{transform:scale(1.035);box-shadow:0 18px 46px rgba(255,8,68,.68)}}
+.hh-play{position:relative;z-index:1;margin:18px 0 14px;width:min(100%,340px);padding:19px;border:none;border-radius:20px;font-size:24px;font-weight:900;letter-spacing:3px;color:#fff;background:linear-gradient(135deg,#ff0844,#ff6a3d 55%,#ffb199);box-shadow:0 8px 22px rgba(255,8,68,.35),inset 0 1px 0 rgba(255,255,255,.30);cursor:pointer;touch-action:manipulation;animation:hhBreathe 2.2s ease-in-out infinite}
+@keyframes hhBreathe{50%{transform:scale(1.02);box-shadow:0 10px 26px rgba(255,8,68,.45)}}
 .hh-play:active{transform:scale(.95);animation:none}
 .hh-burst{position:absolute;width:10px;height:10px;border-radius:50%;pointer-events:none;z-index:60;animation:hhBurst .55s ease-out forwards}
 @keyframes hhBurst{from{transform:translate(0,0);opacity:1}to{transform:translate(var(--dx),var(--dy));opacity:0}}
@@ -124,8 +124,8 @@ body.nav-visible .mobile-card{padding-bottom:86px}
 .board-tab{flex:1;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;font-size:11px;font-weight:800;padding:9px;border-radius:12px;cursor:pointer}
 .board-tab.active{background:rgba(0,245,212,.14);border-color:var(--cyan);color:var(--cyan)}
 #touchRippleContainer{position:absolute;inset:0;z-index:10;pointer-events:none;overflow:hidden}
-.touch-ripple{position:absolute;width:54px;height:54px;border:2px solid var(--cyan);border-radius:50%;transform:translate(-50%,-50%) scale(.25);animation:rippleAnim .32s ease-out forwards}
-.touch-ripple.gold{border-color:var(--gold)}.touch-ripple.bomb{border-color:#ff3344;width:80px;height:80px}.touch-ripple.freeze{border-color:#7df9ff}
+.touch-ripple{position:absolute;width:46px;height:46px;border:1.5px solid rgba(0,245,212,.7);border-radius:50%;transform:translate(-50%,-50%) scale(.25);animation:rippleAnim .3s ease-out forwards}
+.touch-ripple.gold{border-color:var(--gold)}.touch-ripple.bomb{border-color:#ff5e6b;width:66px;height:66px}.touch-ripple.freeze{border-color:#7df9ff}
 @keyframes rippleAnim{to{transform:translate(-50%,-50%) scale(1.7);opacity:0}}
 @media(max-height:640px){.hh-play{margin:12px 0 10px;padding:15px;font-size:20px}}
 
