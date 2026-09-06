@@ -12,6 +12,93 @@ var balloons = [], particles = [], textPopups = [], shockwaves = [], lasers = []
 var currentWeapon = "pistol", weaponTimer = 0, weaponShownSec = -1;
 function sound() { return BB.Audio.sound; }
 function effectsOn() { return BB.Save.data.settings.effects !== false; }
+
+/* ---------- HD SPRITE CACHE (pre-rendered balloons = richer look + faster FPS) ---------- */
+var SPRITES = {}; // key: color|type|radius → offscreen canvas
+function hexToRgb(h) {
+  var v = h.replace("#", "");
+  return { r: parseInt(v.substr(0, 2), 16), g: parseInt(v.substr(2, 2), 16), b: parseInt(v.substr(4, 2), 16) };
+}
+function shade(hex, amt) {
+  var c = hexToRgb(hex);
+  var f = function (x) { return Math.max(0, Math.min(255, Math.round(x + amt))); };
+  return "rgb(" + f(c.r) + "," + f(c.g) + "," + f(c.b) + ")";
+}
+function getSprite(key, color, kind, radius) {
+  var id = key + "|" + kind + "|" + radius;
+  if (SPRITES[id]) return SPRITES[id];
+  var S = radius * 2 * 1.45 + 16;           // canvas size (body + knot + pad)
+  var cv = document.createElement("canvas"); cv.width = S; cv.height = S;
+  var g = cv.getContext("2d");
+  var cx = S / 2, cy = S * 0.46, r = radius;
+  // string
+  g.strokeStyle = "rgba(255,255,255,.45)"; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(cx, cy + r * 1.18); g.quadraticCurveTo(cx + r * 0.3, cy + r * 1.8, cx, cy + r * 2.35); g.stroke();
+  // body path
+  var body = function () {
+    g.beginPath();
+    g.moveTo(cx, cy - r * 1.15);
+    g.bezierCurveTo(cx + r * 1.2, cy - r * 1.15, cx + r * 1.1, cy + r * 0.8, cx, cy + r * 1.2);
+    g.bezierCurveTo(cx - r * 1.1, cy + r * 0.8, cx - r * 1.2, cy - r * 1.15, cx, cy - r * 1.15);
+    g.closePath();
+  };
+  if (kind === "bomb") {
+    body(); g.fillStyle = "#1b1e2e"; g.fill();
+    g.lineWidth = 2.5; g.strokeStyle = "#ff3344";
+    g.shadowColor = "#ff3344"; g.shadowBlur = 14; g.stroke(); g.shadowBlur = 0;
+    g.fillStyle = "rgba(255,255,255,.10)";
+    g.beginPath(); g.ellipse(cx - r * 0.3, cy - r * 0.45, r * 0.3, r * 0.16, -0.5, 0, Math.PI * 2); g.fill();
+  } else if (kind === "gift") {
+    body(); g.fillStyle = "#2a1540"; g.fill();
+    g.lineWidth = 2.5; g.strokeStyle = "#c26bff";
+    g.shadowColor = "#c26bff"; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
+    g.fillStyle = "rgba(255,255,255,.10)";
+    g.beginPath(); g.ellipse(cx - r * 0.3, cy - r * 0.45, r * 0.3, r * 0.16, -0.5, 0, Math.PI * 2); g.fill();
+  } else {
+    body();
+    var grad = g.createRadialGradient(cx - r * 0.38, cy - r * 0.45, r * 0.08, cx, cy, r * 1.35);
+    grad.addColorStop(0, "#ffffff");
+    grad.addColorStop(0.22, shade(color, 55));
+    grad.addColorStop(0.48, color);
+    grad.addColorStop(0.85, shade(color, -70));
+    grad.addColorStop(1, "#05070f");
+    g.fillStyle = grad; g.fill();
+    // rim light (right edge)
+    g.save(); g.clip();
+    var rim = g.createRadialGradient(cx + r * 0.9, cy, r * 0.2, cx + r * 0.9, cy, r * 1.1);
+    rim.addColorStop(0, "rgba(255,255,255,.22)"); rim.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = rim; g.fillRect(cx - r * 1.3, cy - r * 1.3, r * 2.6, r * 2.6);
+    g.restore();
+    // specular highlight
+    g.beginPath();
+    g.ellipse(cx - r * 0.38, cy - r * 0.5, r * 0.30, r * 0.16, Math.PI / 4, 0, Math.PI * 2);
+    g.fillStyle = "rgba(255,255,255,.75)"; g.fill();
+    g.beginPath();
+    g.ellipse(cx - r * 0.05, cy + r * 0.1, r * 0.10, r * 0.05, Math.PI / 4, 0, Math.PI * 2);
+    g.fillStyle = "rgba(255,255,255,.30)"; g.fill();
+    // glow ring for special
+    if (kind === "gold" || kind === "freeze") {
+      g.save();
+      g.shadowColor = kind === "gold" ? "#ffd700" : "#00f5d4"; g.shadowBlur = 18;
+      g.strokeStyle = kind === "gold" ? "rgba(255,215,0,.85)" : "rgba(0,245,212,.85)";
+      g.lineWidth = 2; body(); g.stroke(); g.restore();
+    }
+  }
+  // knot
+  g.beginPath();
+  g.moveTo(cx - r * 0.16, cy + r * 1.22); g.lineTo(cx + r * 0.16, cy + r * 1.22);
+  g.lineTo(cx, cy + r * 1.05); g.closePath();
+  g.fillStyle = kind === "bomb" ? "#ff3344" : (kind === "gift" ? "#c26bff" : color);
+  g.fill();
+  SPRITES[id] = { cv: cv, half: S / 2 };
+  return SPRITES[id];
+}
+function drawSprite(x, y, radius, scale, key, color, kind) {
+  var sp = getSprite(key, color, kind, radius);
+  var rr = radius * (0.6 + 0.4 * scale);
+  ctx.drawImage(sp.cv, x - sp.half, y - sp.half * 0.92, sp.cv.width, sp.cv.height);
+  return rr;
+}
 var dragStart = {};
 var lastMovePop = 0;
 var inputLockUntil = 0;
@@ -47,44 +134,24 @@ class MobileBalloon {
     }
   }
   draw() {
-    var x = this.drawX, y = this.y, rr = this.radius * (0.6 + 0.4 * this.spawnScale);
+    var x = this.drawX, y = this.y;
     var skin = BB.Economy.skinColors();
     var base = (skin && skin[this.spec.key]) || this.spec.color;
     ctx.save();
-    ctx.beginPath(); ctx.moveTo(x, y + this.radius * 1.2); ctx.lineTo(x, y + this.radius * 2.4);
-    ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y - rr * 1.15);
-    ctx.bezierCurveTo(x + rr * 1.2, y - rr * 1.15, x + rr * 1.1, y + rr * 0.8, x, y + rr * 1.2);
-    ctx.bezierCurveTo(x - rr * 1.1, y + rr * 0.8, x - rr * 1.2, y - rr * 1.15, x, y - rr * 1.15);
-    ctx.closePath();
+    // sprite body (string included in sprite)
+    drawSprite(x, y, this.radius, this.spawnScale, this.spec.key, base,
+      this.spec.isBomb ? "bomb" : this.spec.isGift ? "gift" : this.spec.isGold ? "gold" : this.spec.isFreeze ? "freeze" : "normal");
+    // emoji overlay (live, keeps crispness)
+    var r = this.radius * (0.6 + 0.4 * this.spawnScale);
     if (this.spec.isBomb) {
-      ctx.fillStyle = "#161928"; ctx.fill();
-      ctx.lineWidth = 2.5; ctx.strokeStyle = "#ff3344"; ctx.stroke();
       ctx.fillStyle = "#ff4444"; ctx.font = Math.floor(this.radius * 0.9) + "px Arial";
       ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("💣", x, y);
     } else if (this.spec.isGift) {
-      ctx.fillStyle = "#2a1540"; ctx.fill();
-      ctx.lineWidth = 2.5; ctx.strokeStyle = "#c26bff";
-      ctx.shadowColor = "#c26bff"; ctx.shadowBlur = 16; ctx.stroke();
-      ctx.shadowBlur = 0;
       ctx.fillStyle = "#ffffff"; ctx.font = Math.floor(this.radius * 0.95) + "px Arial";
       ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🎁", x, y);
-    } else {
-      var grad = ctx.createRadialGradient(Math.max(1, x - rr * 0.35), Math.max(1, y - rr * 0.4),
-        Math.max(1, rr * 0.1), x, y, Math.max(2, rr * 1.2));
-      grad.addColorStop(0, "#ffffff"); grad.addColorStop(0.35, base); grad.addColorStop(1, "#050712");
-      ctx.fillStyle = grad;
-      if (this.spec.isGold) { ctx.shadowColor = "#ffd700"; ctx.shadowBlur = 18; }
-      else if (this.spec.isFreeze) { ctx.shadowColor = "#00f5d4"; ctx.shadowBlur = 16; }
-      ctx.fill(); ctx.shadowBlur = 0;
-      ctx.beginPath();
-      ctx.ellipse(x - rr * 0.35, y - rr * 0.45, Math.max(1, rr * 0.25), Math.max(1, rr * 0.14), Math.PI / 4, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.fill();
-      if (this.spec.isFreeze) {
-        ctx.fillStyle = "#fff"; ctx.font = "16px Arial";
-        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("❄️", x, y);
-      }
+    } else if (this.spec.isFreeze) {
+      ctx.fillStyle = "#fff"; ctx.font = Math.floor(this.radius * 0.55) + "px Arial";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("❄️", x, y);
     }
     ctx.restore();
   }
@@ -94,20 +161,32 @@ class MobileBalloon {
   }
 }
 class MobileParticle {
-  constructor(x, y, color, heavy) {
-    this.x = x; this.y = y; this.color = color;
+  constructor(x, y, color, heavy, glow) {
+    this.x = x; this.y = y; this.color = color; this.glow = !!glow;
     var a = Math.random() * Math.PI * 2, s = (heavy ? 5 : 3) + Math.random() * (heavy ? 10 : 6);
+    if (glow) s *= 0.7;
     this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s;
-    this.size = 3.5 + Math.random() * 4; this.life = 1;
-    this.decay = 0.022 + Math.random() * 0.025;
+    this.size = glow ? (6 + Math.random() * 8) : (3.5 + Math.random() * 4);
+    this.life = 1;
+    this.decay = glow ? (0.03 + Math.random() * 0.03) : (0.022 + Math.random() * 0.025);
   }
   update(dt) {
     this.x += this.vx * 60 * dt; this.y += this.vy * 60 * dt;
-    this.vy += 0.25 * 60 * dt; this.life -= this.decay * 60 * dt;
+    this.vy += (this.glow ? 0.1 : 0.25) * 60 * dt; this.life -= this.decay * 60 * dt;
   }
   draw() {
     ctx.save(); ctx.globalAlpha = Math.max(0, this.life);
     var fx = BB.Economy.effectId();
+    if (this.glow) {
+      // soft glow orb (premium feel)
+      var gr = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+      gr.addColorStop(0, "rgba(255,255,255,.95)");
+      gr.addColorStop(0.35, this.color);
+      gr.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = gr;
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+      ctx.restore(); return;
+    }
     if (fx === "orbit") {
       ctx.fillStyle = this.color; ctx.beginPath();
       ctx.arc(this.x, this.y, this.size / 1.4, 0, Math.PI * 2); ctx.fill();
@@ -192,7 +271,7 @@ function grantAbility(b) {
   var id = pool[Math.floor(Math.random() * pool.length)];
   var bx = b.drawX, by = b.y;
   sound().pop(combo);
-  burst(bx, by, "#c26bff", 24); burst(bx, by, "#ffd700", 10);
+  burst(bx, by, "#c26bff", 24); burst(bx, by, "#ffd700", 10); burstGlow(bx, by, "#e0b3ff", 10);
   spawnRipple(bx, by, "gold"); addFever(6); earnCoins(3);
   powerupDrops.push(new PowerupDrop(bx, by, id));
   textPopups.push(new MobileTextPopup("CATCH IT! 🎁", bx, by - 24, "#ffd23f", true));
@@ -238,6 +317,19 @@ function burst(x, y, color, n, heavy) {
   for (var i = 0; i < n; i++) {
     if (particles.length > 340) particles.shift();
     particles.push(new MobileParticle(x, y, color, heavy));
+  }
+  // premium glow sparks layered on top
+  var gn = effectsOn() ? Math.min(10, Math.ceil(n / 2)) : 4;
+  for (var j = 0; j < gn; j++) {
+    if (particles.length > 340) particles.shift();
+    particles.push(new MobileParticle(x, y, color, heavy, true));
+  }
+}
+function burstGlow(x, y, color, n) {
+  if (!effectsOn()) n = 3;
+  for (var i = 0; i < n; i++) {
+    if (particles.length > 340) particles.shift();
+    particles.push(new MobileParticle(x, y, color, false, true));
   }
 }
 function triggerShake(i, du) {
@@ -336,7 +428,7 @@ function popBalloon(b) {
     sound().bomb(); BB.Save.data.bombsPopped = (BB.Save.data.bombsPopped || 0) + 1;
     triggerShake(14, 0.4); BB.UI.flash(0.25);
     shockwaves.push(new MobileShockwave(bx, by, 220));
-    burst(bx, by, "#ff5e3a", 26, true); burst(bx, by, "#ffd23f", 14, true);
+    burst(bx, by, "#ff5e3a", 26, true); burst(bx, by, "#ffd23f", 14, true); burstGlow(bx, by, "#ffb36b", 12);
     textPopups.push(new MobileTextPopup("BOOM! 💥", bx, by - 20, "#ff4444", true));
     spawnRipple(bx, by, "bomb"); earnCoins(2);
     balloons.forEach(function (o) {
@@ -349,7 +441,7 @@ function popBalloon(b) {
     }
   } else if (b.spec.isFreeze) {
     sound().freeze(); slowMoTimer = 4.5;
-    burst(bx, by, "#7df9ff", 22); burst(bx, by, "#ffffff", 8);
+    burst(bx, by, "#7df9ff", 22); burst(bx, by, "#ffffff", 8); burstGlow(bx, by, "#b3fbff", 10);
     textPopups.push(new MobileTextPopup("SLOW-MO! ❄️", bx, by - 20, "#7df9ff", true));
     spawnRipple(bx, by, "freeze"); earnCoins(2);
     if (gameMode === "LEVELS" && BB.Content.LEVELS[currentLevelId - 1].type === "freeze") {
@@ -359,9 +451,9 @@ function popBalloon(b) {
   } else {
     sound().pop(combo);
     if (b.spec.isGold) {
-      burst(bx, by, "#ffd23f", 26, true); burst(bx, by, "#fff6c9", 12);
+      burst(bx, by, "#ffd23f", 26, true); burst(bx, by, "#fff6c9", 12); burstGlow(bx, by, "#ffe98a", 8);
       triggerShake(5, 0.18); spawnRipple(bx, by, "gold"); earnCoins(5);
-    } else { burst(bx, by, (BB.Economy.skinColors() || {})[b.spec.key] || b.spec.color, 18); spawnRipple(bx, by, ""); earnCoins(1); }
+    } else { var nb = burst(bx, by, (BB.Economy.skinColors() || {})[b.spec.key] || b.spec.color, 18); burstGlow(bx, by, b.spec.color, 6); spawnRipple(bx, by, ""); earnCoins(1); }
     var pts = (b.spec.points || 10) * combo * (isFever ? 2 : 1);
     score += pts; combo++;
     if (combo > maxCombo) maxCombo = combo;
@@ -502,6 +594,7 @@ function loop(curT) {
     if (feverTimer <= 0) endFever();
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawBokeh(curT);
   if (shakeDuration > 0) {
     shakeDuration -= dt;
     ctx.translate((Math.random() - 0.5) * shakeIntensity, (Math.random() - 0.5) * shakeIntensity);
@@ -544,6 +637,38 @@ function loop(curT) {
   requestAnimationFrame(loop);
 }
 var lastT = performance.now();
+/* subtle floating bokeh dots — depth without clutter (mobile-light) */
+var bokeh = null;
+function drawBokeh(t) {
+  var mobile = width < 600;
+  var n = mobile ? 10 : 22;
+  if (!bokeh) {
+    bokeh = [];
+    for (var i = 0; i < n; i++) {
+      bokeh.push({
+        x: Math.random() * width, y: Math.random() * height,
+        r: mobile ? (8 + Math.random() * 26) : (12 + Math.random() * 46),
+        sp: 6 + Math.random() * 14, ph: Math.random() * Math.PI * 2
+      });
+    }
+  }
+  if (bokeh.length !== n) { bokeh = null; return; }
+  var on = BB.Save.data.settings.effects !== false;
+  if (!on) return;
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  for (var j = 0; j < bokeh.length; j++) {
+    var b = bokeh[j];
+    var yy = (b.y - t * 0.001 * b.sp) % (height + b.r * 2);
+    if (yy < -b.r * 2) yy += height + b.r * 2;
+    var al = 0.05 + 0.05 * Math.sin(t * 0.001 + b.ph);
+    var gr = ctx.createRadialGradient(b.x, yy, 0, b.x, yy, b.r);
+    gr.addColorStop(0, "rgba(120,180,255," + al.toFixed(3) + ")");
+    gr.addColorStop(1, "rgba(120,180,255,0)");
+    ctx.fillStyle = gr;
+    ctx.beginPath(); ctx.arc(b.x, yy, b.r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
 function resizeCanvas() {
   width = window.innerWidth; height = window.innerHeight;
   dpr = Math.min(window.devicePixelRatio || 1, 2.5);
