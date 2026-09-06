@@ -29,10 +29,10 @@ function getSprite(key, color, kind, radius) {
   var id = key + "|" + kind + "|" + radius;
   if (SPRITES[id]) return SPRITES[id];
   var SS = 2;                               // supersample factor for crisp edges
-  var W = Math.ceil((radius * 2 * 1.5 + 12) * SS);
+  var S = Math.ceil(radius * 2 * 1.5 + 12);  // logical sprite size (body + knot only)
+  var W = Math.ceil(S * SS);
   var cv = document.createElement("canvas"); cv.width = W; cv.height = W;
   var g = cv.getContext("2d"); g.scale(SS, SS);
-  var S = W / SS;
   var cx = S / 2, cy = S * 0.47, r = radius;
 
   // ---- balloon silhouette: true pear/teardrop (wide top, tapered neck) ----
@@ -47,12 +47,7 @@ function getSprite(key, color, kind, radius) {
     g.closePath();
   }
 
-  // ---- string: single graceful curve ----
-  g.strokeStyle = "rgba(255,255,255,.38)"; g.lineWidth = 1.4;
-  g.beginPath();
-  g.moveTo(cx, cy + r * 1.12);
-  g.bezierCurveTo(cx + r * 0.14, cy + r * 1.5, cx - r * 0.16, cy + r * 1.85, cx + r * 0.02, cy + r * 2.2);
-  g.stroke();
+  // ---- string: drawn live in Balloon.draw() (sways with wobble — no clipping) ----
 
   // ---- fill pass ----
   body();
@@ -130,10 +125,11 @@ function drawSprite(x, y, radius, scale, key, color, kind) {
   var sp = getSprite(key, color, kind, radius);
   ctx.save();
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
-  // draw at native (supersampled) resolution, scaled by pop-in only
+  // supersampled sprite drawn back to logical size (dest = logical S, not physical px)
   var k = 0.6 + 0.4 * scale;
   ctx.translate(x, y); ctx.scale(k, k);
-  ctx.drawImage(sp.cv, -sp.half, -sp.half * 0.94);
+  var S = sp.cv.width / sp.ss;
+  ctx.drawImage(sp.cv, -S / 2, -S / 2 * 0.94, S, S);
   ctx.restore();
 }
 var dragStart = {};
@@ -175,11 +171,19 @@ class MobileBalloon {
     var skin = BB.Economy.skinColors();
     var base = (skin && skin[this.spec.key]) || this.spec.color;
     ctx.save();
-    // vector-perfect sprite body (string included)
+    var k = 0.6 + 0.4 * this.spawnScale;
+    var r = this.radius * k;
+    // string: live curve, sways with wobble (natural pendulum feel)
+    var sw = Math.sin(this.wobble) * this.radius * 0.22;
+    ctx.strokeStyle = "rgba(255,255,255,.38)"; ctx.lineWidth = 1.4; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x, y + r * 1.16);
+    ctx.bezierCurveTo(x + sw * 0.4, y + r * 1.5, x - sw * 0.5, y + r * 1.8, x + sw, y + r * 2.1);
+    ctx.stroke();
+    // vector-perfect sprite body
     drawSprite(x, y, this.radius, this.spawnScale, this.spec.key, base,
       this.spec.isBomb ? "bomb" : this.spec.isGift ? "gift" : this.spec.isGold ? "gold" : this.spec.isFreeze ? "freeze" : "normal");
     // live vector icons (crisp on every device)
-    var k = 0.6 + 0.4 * this.spawnScale, r = this.radius * k;
     if (this.spec.isBomb) {
       // fuse from crown
       ctx.strokeStyle = "#8a7a6a"; ctx.lineWidth = Math.max(1.5, r * 0.09); ctx.lineCap = "round";
