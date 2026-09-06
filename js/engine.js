@@ -13,91 +13,128 @@ var currentWeapon = "pistol", weaponTimer = 0, weaponShownSec = -1;
 function sound() { return BB.Audio.sound; }
 function effectsOn() { return BB.Save.data.settings.effects !== false; }
 
-/* ---------- HD SPRITE CACHE (pre-rendered balloons = richer look + faster FPS) ---------- */
-var SPRITES = {}; // key: color|type|radius → offscreen canvas
+/* ---------- VECTOR BALLOON SPRITES (2x supersampled = pixel-perfect on any DPI) ---------- */
+var SPRITES = {};
 function hexToRgb(h) {
   var v = h.replace("#", "");
   return { r: parseInt(v.substr(0, 2), 16), g: parseInt(v.substr(2, 2), 16), b: parseInt(v.substr(4, 2), 16) };
 }
-function shade(hex, amt) {
+function mixc(hex, target, t) {
+  // blend hex toward target rgb with factor t (0..1). target = [r,g,b]
   var c = hexToRgb(hex);
-  var f = function (x) { return Math.max(0, Math.min(255, Math.round(x + amt))); };
-  return "rgb(" + f(c.r) + "," + f(c.g) + "," + f(c.b) + ")";
+  var f = function (a, b) { return Math.round(a + (b - a) * t); };
+  return "rgb(" + f(c.r, target[0]) + "," + f(c.g, target[1]) + "," + f(c.b, target[2]) + ")";
 }
 function getSprite(key, color, kind, radius) {
   var id = key + "|" + kind + "|" + radius;
   if (SPRITES[id]) return SPRITES[id];
-  var S = radius * 2 * 1.45 + 16;           // canvas size (body + knot + pad)
-  var cv = document.createElement("canvas"); cv.width = S; cv.height = S;
-  var g = cv.getContext("2d");
-  var cx = S / 2, cy = S * 0.46, r = radius;
-  // string
-  g.strokeStyle = "rgba(255,255,255,.45)"; g.lineWidth = 1.6;
-  g.beginPath(); g.moveTo(cx, cy + r * 1.18); g.quadraticCurveTo(cx + r * 0.3, cy + r * 1.8, cx, cy + r * 2.35); g.stroke();
-  // body path
-  var body = function () {
+  var SS = 2;                               // supersample factor for crisp edges
+  var W = Math.ceil((radius * 2 * 1.5 + 12) * SS);
+  var cv = document.createElement("canvas"); cv.width = W; cv.height = W;
+  var g = cv.getContext("2d"); g.scale(SS, SS);
+  var S = W / SS;
+  var cx = S / 2, cy = S * 0.47, r = radius;
+
+  // ---- balloon silhouette: true pear/teardrop (wide top, tapered neck) ----
+  function body() {
     g.beginPath();
-    g.moveTo(cx, cy - r * 1.15);
-    g.bezierCurveTo(cx + r * 1.2, cy - r * 1.15, cx + r * 1.1, cy + r * 0.8, cx, cy + r * 1.2);
-    g.bezierCurveTo(cx - r * 1.1, cy + r * 0.8, cx - r * 1.2, cy - r * 1.15, cx, cy - r * 1.15);
+    // start at neck top-left, sweep up over the crown, down the right, into the neck
+    g.moveTo(cx - r * 0.12, cy + r * 1.05);
+    g.bezierCurveTo(cx - r * 0.95, cy + r * 0.82, cx - r * 1.08, cy - r * 0.25, cx - r * 0.98, cy - r * 0.42);
+    g.bezierCurveTo(cx - r * 0.86, cy - r * 1.05, cx - r * 0.34, cy - r * 1.22, cx, cy - r * 1.22);
+    g.bezierCurveTo(cx + r * 0.34, cy - r * 1.22, cx + r * 0.86, cy - r * 1.05, cx + r * 0.98, cy - r * 0.42);
+    g.bezierCurveTo(cx + r * 1.08, cy - r * 0.25, cx + r * 0.95, cy + r * 0.82, cx + r * 0.12, cy + r * 1.05);
     g.closePath();
-  };
-  if (kind === "bomb") {
-    body(); g.fillStyle = "#1b1e2e"; g.fill();
-    g.lineWidth = 2.5; g.strokeStyle = "#ff3344";
-    g.shadowColor = "#ff3344"; g.shadowBlur = 14; g.stroke(); g.shadowBlur = 0;
-    g.fillStyle = "rgba(255,255,255,.10)";
-    g.beginPath(); g.ellipse(cx - r * 0.3, cy - r * 0.45, r * 0.3, r * 0.16, -0.5, 0, Math.PI * 2); g.fill();
-  } else if (kind === "gift") {
-    body(); g.fillStyle = "#2a1540"; g.fill();
-    g.lineWidth = 2.5; g.strokeStyle = "#c26bff";
-    g.shadowColor = "#c26bff"; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
-    g.fillStyle = "rgba(255,255,255,.10)";
-    g.beginPath(); g.ellipse(cx - r * 0.3, cy - r * 0.45, r * 0.3, r * 0.16, -0.5, 0, Math.PI * 2); g.fill();
-  } else {
-    body();
-    var grad = g.createRadialGradient(cx - r * 0.38, cy - r * 0.45, r * 0.08, cx, cy, r * 1.35);
-    grad.addColorStop(0, "#ffffff");
-    grad.addColorStop(0.22, shade(color, 55));
-    grad.addColorStop(0.48, color);
-    grad.addColorStop(0.85, shade(color, -70));
-    grad.addColorStop(1, "#05070f");
-    g.fillStyle = grad; g.fill();
-    // rim light (right edge)
-    g.save(); g.clip();
-    var rim = g.createRadialGradient(cx + r * 0.9, cy, r * 0.2, cx + r * 0.9, cy, r * 1.1);
-    rim.addColorStop(0, "rgba(255,255,255,.22)"); rim.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = rim; g.fillRect(cx - r * 1.3, cy - r * 1.3, r * 2.6, r * 2.6);
-    g.restore();
-    // specular highlight
-    g.beginPath();
-    g.ellipse(cx - r * 0.38, cy - r * 0.5, r * 0.30, r * 0.16, Math.PI / 4, 0, Math.PI * 2);
-    g.fillStyle = "rgba(255,255,255,.75)"; g.fill();
-    g.beginPath();
-    g.ellipse(cx - r * 0.05, cy + r * 0.1, r * 0.10, r * 0.05, Math.PI / 4, 0, Math.PI * 2);
-    g.fillStyle = "rgba(255,255,255,.30)"; g.fill();
-    // glow ring for special
-    if (kind === "gold" || kind === "freeze") {
-      g.save();
-      g.shadowColor = kind === "gold" ? "#ffd700" : "#00f5d4"; g.shadowBlur = 18;
-      g.strokeStyle = kind === "gold" ? "rgba(255,215,0,.85)" : "rgba(0,245,212,.85)";
-      g.lineWidth = 2; body(); g.stroke(); g.restore();
-    }
   }
-  // knot
+
+  // ---- string: single graceful curve ----
+  g.strokeStyle = "rgba(255,255,255,.38)"; g.lineWidth = 1.4;
   g.beginPath();
-  g.moveTo(cx - r * 0.16, cy + r * 1.22); g.lineTo(cx + r * 0.16, cy + r * 1.22);
-  g.lineTo(cx, cy + r * 1.05); g.closePath();
-  g.fillStyle = kind === "bomb" ? "#ff3344" : (kind === "gift" ? "#c26bff" : color);
+  g.moveTo(cx, cy + r * 1.12);
+  g.bezierCurveTo(cx + r * 0.14, cy + r * 1.5, cx - r * 0.16, cy + r * 1.85, cx + r * 0.02, cy + r * 2.2);
+  g.stroke();
+
+  // ---- fill pass ----
+  body();
+  if (kind === "bomb") {
+    var bg = g.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.1, cx, cy, r * 1.25);
+    bg.addColorStop(0, "#2a2e42"); bg.addColorStop(0.6, "#1b1e2e"); bg.addColorStop(1, "#0b0d18");
+    g.fillStyle = bg; g.fill();
+  } else if (kind === "gift") {
+    var gg = g.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.1, cx, cy, r * 1.25);
+    gg.addColorStop(0, "#432a63"); gg.addColorStop(0.55, "#2a1540"); gg.addColorStop(1, "#120820");
+    g.fillStyle = gg; g.fill();
+  } else {
+    // realistic latex: light falls top-left, deepens bottom-right, subtle bounce light bottom
+    var grad = g.createRadialGradient(cx - r * 0.42, cy - r * 0.5, r * 0.05, cx + r * 0.12, cy + r * 0.15, r * 1.35);
+    grad.addColorStop(0.00, mixc(color, [255, 255, 255], 0.72));
+    grad.addColorStop(0.18, mixc(color, [255, 255, 255], 0.38));
+    grad.addColorStop(0.42, color);
+    grad.addColorStop(0.80, mixc(color, [8, 10, 20], 0.62));
+    grad.addColorStop(1.00, mixc(color, [5, 6, 14], 0.82));
+    g.fillStyle = grad; g.fill();
+    // bounce light (bottom rim picks up scene light)
+    g.save(); body(); g.clip();
+    var bl = g.createRadialGradient(cx, cy + r * 0.95, r * 0.05, cx, cy + r * 0.95, r * 0.75);
+    bl.addColorStop(0, "rgba(255,255,255,.14)"); bl.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = bl; g.fillRect(cx - r * 1.3, cy - r * 1.3, r * 2.6, r * 2.6);
+    g.restore();
+  }
+
+  // ---- soft window highlight (single, feathered — no hard sticker gloss) ----
+  g.save(); body(); g.clip();
+  var hi = g.createRadialGradient(cx - r * 0.42, cy - r * 0.52, 0, cx - r * 0.42, cy - r * 0.52, r * 0.75);
+  hi.addColorStop(0, "rgba(255,255,255,.55)");
+  hi.addColorStop(0.55, "rgba(255,255,255,.18)");
+  hi.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = hi;
+  g.beginPath(); g.ellipse(cx - r * 0.42, cy - r * 0.52, r * 0.52, r * 0.38, -0.5, 0, Math.PI * 2); g.fill();
+  g.restore();
+
+  // ---- inner edge darkening (vignette for volume) ----
+  g.save(); body(); g.clip();
+  var vg = g.createRadialGradient(cx, cy, r * 0.55, cx, cy, r * 1.12);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(0,0,0,.28)");
+  g.fillStyle = vg; g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
+  g.restore();
+
+  // ---- special halo (gold/freeze only — restrained) ----
+  if (kind === "gold" || kind === "freeze") {
+    g.save();
+    g.shadowColor = kind === "gold" ? "rgba(255,215,0,.9)" : "rgba(0,245,212,.9)";
+    g.shadowBlur = 10;
+    g.strokeStyle = kind === "gold" ? "rgba(255,225,120,.5)" : "rgba(140,250,235,.5)";
+    g.lineWidth = 1.5; body(); g.stroke();
+    g.restore();
+  }
+  // bomb ring
+  if (kind === "bomb") {
+    g.save(); g.shadowColor = "rgba(255,60,80,.9)"; g.shadowBlur = 10;
+    g.strokeStyle = "rgba(255,70,90,.55)"; g.lineWidth = 1.5; body(); g.stroke();
+    g.restore();
+  }
+
+  // ---- knot + neck tie ----
+  g.beginPath();
+  g.moveTo(cx - r * 0.10, cy + r * 1.06);
+  g.quadraticCurveTo(cx, cy + r * 1.22, cx + r * 0.10, cy + r * 1.06);
+  g.closePath();
+  g.fillStyle = kind === "bomb" ? "#ff4757" : (kind === "gift" ? "#a86bff" : mixc(color, [255, 255, 255], 0.12));
   g.fill();
-  SPRITES[id] = { cv: cv, half: S / 2 };
+
+  SPRITES[id] = { cv: cv, half: S / 2, ss: SS };
   return SPRITES[id];
 }
 function drawSprite(x, y, radius, scale, key, color, kind) {
   var sp = getSprite(key, color, kind, radius);
-  var rr = radius * (0.6 + 0.4 * scale);
-  ctx.drawImage(sp.cv, x - sp.half, y - sp.half * 0.92, sp.cv.width, sp.cv.height);
-  return rr;
+  ctx.save();
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+  // draw at native (supersampled) resolution, scaled by pop-in only
+  var k = 0.6 + 0.4 * scale;
+  ctx.translate(x, y); ctx.scale(k, k);
+  ctx.drawImage(sp.cv, -sp.half, -sp.half * 0.94);
+  ctx.restore();
 }
 var dragStart = {};
 var lastMovePop = 0;
@@ -138,20 +175,65 @@ class MobileBalloon {
     var skin = BB.Economy.skinColors();
     var base = (skin && skin[this.spec.key]) || this.spec.color;
     ctx.save();
-    // sprite body (string included in sprite)
+    // vector-perfect sprite body (string included)
     drawSprite(x, y, this.radius, this.spawnScale, this.spec.key, base,
       this.spec.isBomb ? "bomb" : this.spec.isGift ? "gift" : this.spec.isGold ? "gold" : this.spec.isFreeze ? "freeze" : "normal");
-    // emoji overlay (live, keeps crispness)
-    var r = this.radius * (0.6 + 0.4 * this.spawnScale);
+    // live vector icons (crisp on every device)
+    var k = 0.6 + 0.4 * this.spawnScale, r = this.radius * k;
     if (this.spec.isBomb) {
-      ctx.fillStyle = "#ff4444"; ctx.font = Math.floor(this.radius * 0.9) + "px Arial";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("💣", x, y);
+      // fuse from crown
+      ctx.strokeStyle = "#8a7a6a"; ctx.lineWidth = Math.max(1.5, r * 0.09); ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(x, y - r * 1.12); ctx.quadraticCurveTo(x + r * 0.28, y - r * 1.38, x + r * 0.42, y - r * 1.28); ctx.stroke();
+      // spark star
+      var sx = x + r * 0.42, sy = y - r * 1.28;
+      ctx.strokeStyle = "#ffb340"; ctx.lineWidth = Math.max(1.2, r * 0.08);
+      ctx.beginPath();
+      for (var b1 = 0; b1 < 4; b1++) {
+        var a1 = b1 * Math.PI / 2 + 0.4;
+        ctx.moveTo(sx + Math.cos(a1) * r * 0.10, sy + Math.sin(a1) * r * 0.10);
+        ctx.lineTo(sx + Math.cos(a1) * r * 0.24, sy + Math.sin(a1) * r * 0.24);
+      }
+      ctx.stroke();
+      ctx.fillStyle = "#ffe9a8";
+      ctx.beginPath(); ctx.arc(sx, sy, Math.max(1.2, r * 0.07), 0, Math.PI * 2); ctx.fill();
     } else if (this.spec.isGift) {
-      ctx.fillStyle = "#ffffff"; ctx.font = Math.floor(this.radius * 0.95) + "px Arial";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("🎁", x, y);
+      // ribbon box icon
+      var bw = r * 0.62, bh = r * 0.52, byy = y + r * 0.06;
+      ctx.strokeStyle = "rgba(255,255,255,.92)"; ctx.lineWidth = Math.max(1.4, r * 0.08);
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x - bw / 2, byy - bh / 2, bw, bh, r * 0.1); else ctx.rect(x - bw / 2, byy - bh / 2, bw, bh);
+      ctx.stroke();
+      // ribbon bands
+      ctx.beginPath();
+      ctx.moveTo(x, byy - bh / 2); ctx.lineTo(x, byy + bh / 2);
+      ctx.moveTo(x - bw / 2, byy - bh * 0.12); ctx.lineTo(x + bw / 2, byy - bh * 0.12);
+      ctx.stroke();
+      // bow
+      ctx.beginPath();
+      ctx.arc(x - r * 0.10, byy - bh * 0.72, r * 0.09, 0, Math.PI * 2);
+      ctx.arc(x + r * 0.10, byy - bh * 0.72, r * 0.09, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.fill();
     } else if (this.spec.isFreeze) {
-      ctx.fillStyle = "#fff"; ctx.font = Math.floor(this.radius * 0.55) + "px Arial";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("❄️", x, y);
+      // snowflake: 3 spokes + V ticks
+      ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = Math.max(1.3, r * 0.07); ctx.lineCap = "round";
+      var R1 = r * 0.52;
+      ctx.beginPath();
+      for (var s1 = 0; s1 < 3; s1++) {
+        var ang = s1 * Math.PI / 3 + Math.PI / 6;
+        var dx1 = Math.cos(ang) * R1, dy1 = Math.sin(ang) * R1;
+        ctx.moveTo(x - dx1, y - dy1); ctx.lineTo(x + dx1, y + dy1);
+        // V ticks at both ends
+        var tx = x + dx1 * 0.72, ty = y + dy1 * 0.72;
+        ctx.moveTo(tx, ty); ctx.lineTo(tx - dx1 * 0.28 + dy1 * 0.16, ty - dy1 * 0.28 - dx1 * 0.16);
+        ctx.moveTo(tx, ty); ctx.lineTo(tx - dx1 * 0.28 - dy1 * 0.16, ty - dy1 * 0.28 + dx1 * 0.16);
+        var tx2 = x - dx1 * 0.72, ty2 = y - dy1 * 0.72;
+        ctx.moveTo(tx2, ty2); ctx.lineTo(tx2 + dx1 * 0.28 + dy1 * 0.16, ty2 + dy1 * 0.28 - dx1 * 0.16);
+        ctx.moveTo(tx2, ty2); ctx.lineTo(tx2 + dx1 * 0.28 - dy1 * 0.16, ty2 + dy1 * 0.28 + dx1 * 0.16);
+      }
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,.95)";
+      ctx.beginPath(); ctx.arc(x, y, Math.max(1.2, r * 0.06), 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
   }
@@ -161,40 +243,36 @@ class MobileBalloon {
   }
 }
 class MobileParticle {
-  constructor(x, y, color, heavy, glow) {
-    this.x = x; this.y = y; this.color = color; this.glow = !!glow;
-    var a = Math.random() * Math.PI * 2, s = (heavy ? 5 : 3) + Math.random() * (heavy ? 10 : 6);
-    if (glow) s *= 0.7;
+  constructor(x, y, color, heavy) {
+    this.x = x; this.y = y; this.color = color;
+    var a = Math.random() * Math.PI * 2;
+    var s = (heavy ? 4 : 2.6) + Math.random() * (heavy ? 7 : 4.5);
     this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s;
-    this.size = glow ? (6 + Math.random() * 8) : (3.5 + Math.random() * 4);
-    this.life = 1;
-    this.decay = glow ? (0.03 + Math.random() * 0.03) : (0.022 + Math.random() * 0.025);
+    this.shard = Math.random() < 0.38;
+    this.size = this.shard ? (3 + Math.random() * 3) : (1.8 + Math.random() * 2.4);
+    this.rot = Math.random() * Math.PI; this.vr = (Math.random() - 0.5) * 0.25;
+    this.life = 1; this.decay = 0.024 + Math.random() * 0.026;
   }
   update(dt) {
     this.x += this.vx * 60 * dt; this.y += this.vy * 60 * dt;
-    this.vy += (this.glow ? 0.1 : 0.25) * 60 * dt; this.life -= this.decay * 60 * dt;
+    this.vy += 0.18 * 60 * dt; this.vx *= (1 - Math.min(1, 0.9 * dt));
+    this.life -= this.decay * 60 * dt; this.rot += this.vr;
   }
   draw() {
-    ctx.save(); ctx.globalAlpha = Math.max(0, this.life);
-    var fx = BB.Economy.effectId();
-    if (this.glow) {
-      // soft glow orb (premium feel)
-      var gr = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
-      gr.addColorStop(0, "rgba(255,255,255,.95)");
-      gr.addColorStop(0.35, this.color);
-      gr.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = gr;
-      ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-      ctx.restore(); return;
-    }
-    if (fx === "orbit") {
-      ctx.fillStyle = this.color; ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size / 1.4, 0, Math.PI * 2); ctx.fill();
-    } else if (fx === "comet") {
-      ctx.fillStyle = this.color; ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
-      ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.fillRect(this.x - 1.5, this.y - 1.5, 3, 3);
+    var a = this.life;
+    a = a * a * (3 - 2 * a); // smoothstep — fades in control, no flicker
+    if (a <= 0) return;
+    ctx.save(); ctx.globalAlpha = a;
+    if (this.shard) {
+      ctx.translate(this.x, this.y); ctx.rotate(this.rot);
+      ctx.fillStyle = this.color;
+      var s = this.size;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(-s / 2, -s / 2, s, s, s * 0.35); else ctx.rect(-s / 2, -s / 2, s, s);
+      ctx.fill();
     } else {
-      ctx.fillStyle = this.color; ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+      ctx.fillStyle = this.color;
+      ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
   }
@@ -206,19 +284,28 @@ class MobileTextPopup {
   }
   update(dt) { this.y -= 40 * dt; this.life -= 1.3 * dt; }
   draw() {
-    ctx.save(); ctx.globalAlpha = Math.max(0, this.life);
+    var a = this.life;
+    a = Math.min(1, a * 1.6); // hold full, fade at end
+    ctx.save(); ctx.globalAlpha = Math.max(0, a);
     ctx.font = this.isBig ? "900 24px -apple-system,sans-serif" : "bold 18px -apple-system,sans-serif";
-    ctx.fillStyle = this.color; ctx.shadowColor = "rgba(0,0,0,.8)"; ctx.shadowBlur = 6;
-    ctx.textAlign = "center"; ctx.fillText(this.text, this.x, this.y); ctx.restore();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "rgba(4,6,14,.85)"; ctx.lineWidth = 4;
+    ctx.strokeText(this.text, this.x, this.y);
+    ctx.fillStyle = this.color;
+    ctx.fillText(this.text, this.x, this.y);
+    ctx.restore();
   }
 }
 class MobileShockwave {
-  constructor(x, y, m) { this.x = x; this.y = y; this.r = 10; this.maxR = m; this.life = 1; }
+  constructor(x, y, m, color) { this.x = x; this.y = y; this.r = 8; this.maxR = m; this.life = 1; this.color = color || "#ff5e3a"; }
   update(dt) { this.r += (this.maxR - this.r) * 14 * dt; this.life -= 2.4 * dt; }
   draw() {
-    ctx.save(); ctx.globalAlpha = Math.max(0, this.life);
+    var a = this.life * this.life; // ease-out fade
+    ctx.save(); ctx.globalAlpha = Math.max(0, a);
     ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-    ctx.strokeStyle = "#ff4422"; ctx.lineWidth = 4 * this.life; ctx.stroke(); ctx.restore();
+    ctx.strokeStyle = this.color; ctx.lineWidth = 3 * this.life; ctx.stroke();
+    ctx.restore();
   }
 }
 function sfxPowerup() {
@@ -271,8 +358,7 @@ function grantAbility(b) {
   var id = pool[Math.floor(Math.random() * pool.length)];
   var bx = b.drawX, by = b.y;
   sound().pop(combo);
-  burst(bx, by, "#c26bff", 24); burst(bx, by, "#ffd700", 10); burstGlow(bx, by, "#e0b3ff", 10);
-  spawnRipple(bx, by, "gold"); addFever(6); earnCoins(3);
+  burst(bx, by, "#c26bff", 16); burst(bx, by, "#ffd700", 8); spawnRipple(bx, by, "gold"); addFever(6); earnCoins(3);
   powerupDrops.push(new PowerupDrop(bx, by, id));
   textPopups.push(new MobileTextPopup("CATCH IT! 🎁", bx, by - 24, "#ffd23f", true));
   combo++;
@@ -315,21 +401,8 @@ function updateWeaponBadge() {
 function burst(x, y, color, n, heavy) {
   if (!effectsOn()) n = Math.min(n, 8);
   for (var i = 0; i < n; i++) {
-    if (particles.length > 340) particles.shift();
+    if (particles.length > 320) particles.shift();
     particles.push(new MobileParticle(x, y, color, heavy));
-  }
-  // premium glow sparks layered on top
-  var gn = effectsOn() ? Math.min(10, Math.ceil(n / 2)) : 4;
-  for (var j = 0; j < gn; j++) {
-    if (particles.length > 340) particles.shift();
-    particles.push(new MobileParticle(x, y, color, heavy, true));
-  }
-}
-function burstGlow(x, y, color, n) {
-  if (!effectsOn()) n = 3;
-  for (var i = 0; i < n; i++) {
-    if (particles.length > 340) particles.shift();
-    particles.push(new MobileParticle(x, y, color, false, true));
   }
 }
 function triggerShake(i, du) {
@@ -427,9 +500,8 @@ function popBalloon(b) {
   if (b.spec.isBomb) {
     sound().bomb(); BB.Save.data.bombsPopped = (BB.Save.data.bombsPopped || 0) + 1;
     triggerShake(14, 0.4); BB.UI.flash(0.25);
-    shockwaves.push(new MobileShockwave(bx, by, 220));
-    burst(bx, by, "#ff5e3a", 26, true); burst(bx, by, "#ffd23f", 14, true); burstGlow(bx, by, "#ffb36b", 12);
-    textPopups.push(new MobileTextPopup("BOOM! 💥", bx, by - 20, "#ff4444", true));
+    shockwaves.push(new MobileShockwave(bx, by, 220, "#ff5e3a"));
+    burst(bx, by, "#ff5e3a", 18, true); burst(bx, by, "#ffd23f", 10, true); textPopups.push(new MobileTextPopup("BOOM! 💥", bx, by - 20, "#ff4444", true));
     spawnRipple(bx, by, "bomb"); earnCoins(2);
     balloons.forEach(function (o) {
       if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < 180) {
@@ -441,8 +513,7 @@ function popBalloon(b) {
     }
   } else if (b.spec.isFreeze) {
     sound().freeze(); slowMoTimer = 4.5;
-    burst(bx, by, "#7df9ff", 22); burst(bx, by, "#ffffff", 8); burstGlow(bx, by, "#b3fbff", 10);
-    textPopups.push(new MobileTextPopup("SLOW-MO! ❄️", bx, by - 20, "#7df9ff", true));
+    burst(bx, by, "#7df9ff", 14); burst(bx, by, "#ffffff", 6); shockwaves.push(new MobileShockwave(bx, by, 72, "#7df9ff")); textPopups.push(new MobileTextPopup("SLOW-MO! ❄️", bx, by - 20, "#7df9ff", true));
     spawnRipple(bx, by, "freeze"); earnCoins(2);
     if (gameMode === "LEVELS" && BB.Content.LEVELS[currentLevelId - 1].type === "freeze") {
       levelProgressCount++; checkLevelWin();
@@ -451,9 +522,8 @@ function popBalloon(b) {
   } else {
     sound().pop(combo);
     if (b.spec.isGold) {
-      burst(bx, by, "#ffd23f", 26, true); burst(bx, by, "#fff6c9", 12); burstGlow(bx, by, "#ffe98a", 8);
-      triggerShake(5, 0.18); spawnRipple(bx, by, "gold"); earnCoins(5);
-    } else { var nb = burst(bx, by, (BB.Economy.skinColors() || {})[b.spec.key] || b.spec.color, 18); burstGlow(bx, by, b.spec.color, 6); spawnRipple(bx, by, ""); earnCoins(1); }
+      burst(bx, by, "#ffd23f", 16, true); burst(bx, by, "#fff6c9", 8); shockwaves.push(new MobileShockwave(bx, by, 64, "#ffd23f")); triggerShake(5, 0.18); spawnRipple(bx, by, "gold"); earnCoins(5);
+    } else { burst(bx, by, (BB.Economy.skinColors() || {})[b.spec.key] || b.spec.color, 12); spawnRipple(bx, by, ""); earnCoins(1); }
     var pts = (b.spec.points || 10) * combo * (isFever ? 2 : 1);
     score += pts; combo++;
     if (combo > maxCombo) maxCombo = combo;
@@ -641,13 +711,13 @@ var lastT = performance.now();
 var bokeh = null;
 function drawBokeh(t) {
   var mobile = width < 600;
-  var n = mobile ? 10 : 22;
+  var n = mobile ? 6 : 12;
   if (!bokeh) {
     bokeh = [];
     for (var i = 0; i < n; i++) {
       bokeh.push({
         x: Math.random() * width, y: Math.random() * height,
-        r: mobile ? (8 + Math.random() * 26) : (12 + Math.random() * 46),
+        r: mobile ? (10 + Math.random() * 18) : (14 + Math.random() * 32),
         sp: 6 + Math.random() * 14, ph: Math.random() * Math.PI * 2
       });
     }
@@ -660,7 +730,7 @@ function drawBokeh(t) {
     var b = bokeh[j];
     var yy = (b.y - t * 0.001 * b.sp) % (height + b.r * 2);
     if (yy < -b.r * 2) yy += height + b.r * 2;
-    var al = 0.05 + 0.05 * Math.sin(t * 0.001 + b.ph);
+    var al = 0.025 + 0.025 * Math.sin(t * 0.001 + b.ph);
     var gr = ctx.createRadialGradient(b.x, yy, 0, b.x, yy, b.r);
     gr.addColorStop(0, "rgba(120,180,255," + al.toFixed(3) + ")");
     gr.addColorStop(1, "rgba(120,180,255,0)");
