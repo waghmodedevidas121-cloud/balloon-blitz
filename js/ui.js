@@ -32,6 +32,7 @@ BB.UI = (function () {
   function show(id) {
     SCREENS.forEach(function (s) { var el = $(s); if (el) el.classList.toggle("hidden", s !== id); });
     var st = BB.Engine.state(), playing = (st.state === "PLAYING" || st.state === "PAUSED");
+    if (playing) { try { BB.Engine.lockInput(); } catch (e) {} }
     $("mobileHud").style.display = playing ? "flex" : "none";
     $("mobileBottomHud").style.display = playing ? "flex" : "none";
     $("mobileObjBanner").style.display = (playing && st.mode === "LEVELS") ? "block" : "none";

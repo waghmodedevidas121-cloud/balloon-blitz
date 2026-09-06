@@ -14,6 +14,8 @@ function sound() { return BB.Audio.sound; }
 function effectsOn() { return BB.Save.data.settings.effects !== false; }
 var dragStart = {};
 var lastMovePop = 0;
+var inputLockUntil = 0;
+function lockInput() { inputLockUntil = Date.now() + 500; }
 function isUiTouch(e) {
   try { return !!(e.target && e.target.closest && e.target.closest("button,#mobileHud,#bottomNav,.overlay-view")); }
   catch (err) { return false; }
@@ -260,7 +262,7 @@ function resetRun() {
 }
 function startBlitz() {
   sound().init(); BB.Music.playMode("BLITZ");
-  BB.Ads.notifyRunStart();
+  BB.Ads.notifyRunStart(); lockInput();
   gameMode = "BLITZ"; gameState = "PLAYING"; resetRun(); timeLeft = 60;
   BB.Save.data.gamesPlayed = (BB.Save.data.gamesPlayed || 0) + 1; BB.Save.save();
   initBalloons(); updateHud(); BB.UI.show(null);
@@ -268,7 +270,7 @@ function startBlitz() {
 }
 function startInfinite() {
   sound().init(); BB.Music.playMode("survival");
-  BB.Ads.notifyRunStart();
+  BB.Ads.notifyRunStart(); lockInput();
   gameMode = "INFINITE"; gameState = "PLAYING"; resetRun(); lives = 3; wave = 1;
   BB.Save.data.gamesPlayed = (BB.Save.data.gamesPlayed || 0) + 1; BB.Save.save();
   initBalloons(); updateHud(); BB.UI.show(null);
@@ -277,7 +279,7 @@ function startInfinite() {
 }
 function startLevel(id) {
   sound().init(); BB.Music.playMode("LEVELS");
-  BB.Ads.notifyRunStart(); currentLevelId = id;
+  BB.Ads.notifyRunStart(); lockInput(); currentLevelId = id;
   var l = BB.Content.LEVELS[id - 1];
   gameMode = "LEVELS"; gameState = "PLAYING"; resetRun();
   timeLeft = l.time; levelProgressCount = 0;
@@ -549,6 +551,7 @@ function resizeCanvas() {
   mousePos.x = width / 2; mousePos.y = height / 2;
 }
 BB.Engine = {
+  lockInput: function () { inputLockUntil = Date.now() + 500; },
   init: function (id) {
     canvas = document.getElementById(id); ctx = canvas.getContext("2d");
     resizeCanvas();
@@ -556,6 +559,7 @@ BB.Engine = {
     window.addEventListener("orientationchange", function () { setTimeout(resizeCanvas, 150); });
     window.addEventListener("pointerdown", function (e) {
       BB.Audio.sound.init(); if (isUiTouch(e)) return;
+      if (Date.now() < inputLockUntil) return;
       if (e.pointerId !== undefined) dragStart[e.pointerId] = { x: e.clientX, y: e.clientY };
       handleTouchAt(e.clientX, e.clientY);
     });
