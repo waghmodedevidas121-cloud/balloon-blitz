@@ -13,7 +13,7 @@ var currentWeapon = "pistol", weaponTimer = 0, weaponShownSec = -1;
 function sound() { return BB.Audio.sound; }
 function effectsOn() { return BB.Save.data.settings.effects !== false; }
 
-/* ---------- VOLUMETRIC BALLOON SHADING v5 (3D round feel: real light + shadow, zero glow) ---------- */
+/* ---------- CARTOON BALLOON SPRITES (kids-game style: dark outline, flat bright fill, bold shine, cute faces) ---------- */
 var SPRITES = {};
 function hexToRgb(h) {
   var v = h.replace("#", "");
@@ -34,7 +34,6 @@ function getSprite(key, color, kind, radius) {
   var g = cv.getContext("2d"); g.scale(SS, SS);
   var cx = S / 2, cy = S * 0.47, r = radius;
 
-  // silhouette
   function body() {
     g.beginPath();
     g.moveTo(cx - r * 0.12, cy + r * 1.05);
@@ -44,72 +43,92 @@ function getSprite(key, color, kind, radius) {
     g.bezierCurveTo(cx + r * 1.08, cy - r * 0.25, cx + r * 0.95, cy + r * 0.82, cx + r * 0.12, cy + r * 1.05);
     g.closePath();
   }
-
-  // 1) BASE: diagonal 3D grade — light hits top-left, body darkens to bottom-right
-  body();
-  var grad = g.createRadialGradient(cx - r * 0.38, cy - r * 0.45, r * 0.12, cx + r * 0.25, cy + r * 0.45, r * 1.55);
-  if (kind === "bomb") {
-    grad.addColorStop(0, "#4a5070"); grad.addColorStop(0.5, "#262a3c"); grad.addColorStop(1, "#0e1018");
-  } else if (kind === "gift") {
-    grad.addColorStop(0, "#7a52ad"); grad.addColorStop(0.5, "#3d2468"); grad.addColorStop(1, "#180b2c");
-  } else {
-    grad.addColorStop(0.00, mixc(color, [255, 255, 255], 0.55));
-    grad.addColorStop(0.30, mixc(color, [255, 255, 255], 0.12));
-    grad.addColorStop(0.62, color);
-    grad.addColorStop(1.00, mixc(color, [6, 7, 14], 0.78));
+  function star8(sx, sy, sr) {
+    g.beginPath();
+    for (var i = 0; i < 8; i++) {
+      var a2 = i * Math.PI / 4;
+      var rr2 = (i % 2 === 0) ? sr : sr * 0.42;
+      var px = sx + Math.cos(a2) * rr2, py = sy + Math.sin(a2) * rr2;
+      if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
+    }
+    g.closePath(); g.fill();
   }
-  g.fillStyle = grad; g.fill();
 
-  // 2) CORE SHADOW: crescent hugging bottom-right inner edge (this is what makes it round)
-  g.save(); body(); g.clip();
-  var cr = g.createRadialGradient(cx - r * 0.45, cy - r * 0.55, r * 0.4, cx + r * 0.35, cy + r * 0.5, r * 1.45);
-  cr.addColorStop(0, "rgba(0,0,0,0)");
-  cr.addColorStop(0.72, "rgba(0,0,0,.10)");
-  cr.addColorStop(1, "rgba(0,0,0,.42)");
-  g.fillStyle = cr; g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
-  g.restore();
+  var outline = kind === "bomb" ? "#ff4757"
+    : kind === "gift" ? "#d9b3ff"
+    : mixc(color, [25, 20, 45], 0.5);
 
-  // 3) REFLECTED LIGHT: thin cool rim on lower-left (light bouncing from ground — realism)
-  g.save(); body(); g.clip();
-  var rl = g.createRadialGradient(cx - r * 0.85, cy + r * 0.72, r * 0.05, cx - r * 0.85, cy + r * 0.72, r * 0.6);
-  rl.addColorStop(0, "rgba(150,190,255,.20)");
-  rl.addColorStop(1, "rgba(150,190,255,0)");
-  g.fillStyle = rl; g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
-  g.restore();
-
-  // 4) SPECULAR: single crisp window, feathered tail (glass-like, not sticker)
-  g.save(); body(); g.clip();
-  g.translate(cx - r * 0.42, cy - r * 0.60);
-  g.rotate(-0.55);
-  var spec = g.createRadialGradient(0, 0, 0, 0, 0, 1);
-  spec.addColorStop(0, "rgba(255,255,255,.95)");
-  spec.addColorStop(0.55, "rgba(255,255,255,.55)");
-  spec.addColorStop(1, "rgba(255,255,255,0)");
-  g.fillStyle = spec;
-  g.beginPath(); g.ellipse(0, 0, r * 0.34, r * 0.17, 0, 0, Math.PI * 2); g.fill();
-  // tiny secondary sparkle dot just below-right of the window
-  g.fillStyle = "rgba(255,255,255,.35)";
-  g.beginPath(); g.ellipse(r * 0.16, r * 0.30, r * 0.06, r * 0.035, 0, 0, Math.PI * 2); g.fill();
-  g.restore();
-
-  // 5) NECK AO: small shadow where neck meets body
-  g.save(); body(); g.clip();
-  var nk = g.createRadialGradient(cx, cy + r * 0.98, r * 0.02, cx, cy + r * 0.98, r * 0.30);
-  nk.addColorStop(0, "rgba(0,0,0,.30)"); nk.addColorStop(1, "rgba(0,0,0,0)");
-  g.fillStyle = nk; g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
-  g.restore();
-
-  // 6) KNOT: shaded mini-cone (lit from top)
-  var kg = g.createLinearGradient(cx - r * 0.12, cy + r * 1.0, cx + r * 0.12, cy + r * 1.24);
-  var knotBase = kind === "bomb" ? "#3a3f58" : (kind === "gift" ? "#7b4fd0" : color);
-  kg.addColorStop(0, mixc(knotBase, [255, 255, 255], 0.25));
-  kg.addColorStop(1, mixc(knotBase, [0, 0, 0], 0.45));
-  g.fillStyle = kg;
-  g.beginPath();
-  g.moveTo(cx - r * 0.11, cy + r * 1.06);
-  g.quadraticCurveTo(cx, cy + r * 1.26, cx + r * 0.11, cy + r * 1.06);
-  g.closePath();
+  // 1) flat bright base fill
+  body();
+  g.fillStyle = (kind === "bomb") ? "#23273a" : (kind === "gift" ? "#4a2b7d" : color);
   g.fill();
+
+  g.save(); body(); g.clip();
+  // 2) soft top light wash
+  var tl = g.createLinearGradient(0, cy - r * 1.22, 0, cy + r * 0.15);
+  tl.addColorStop(0, "rgba(255,255,255,.30)");
+  tl.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = tl;
+  g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
+  // 3) simple bottom shade band
+  var bd = g.createLinearGradient(0, cy + r * 0.2, 0, cy + r * 1.05);
+  bd.addColorStop(0, "rgba(20,10,40,0)");
+  bd.addColorStop(1, "rgba(20,10,40,.32)");
+  g.fillStyle = bd;
+  g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
+  g.restore();
+
+  // 4) BOLD cartoon shine streak (signature look)
+  g.save(); body(); g.clip();
+  g.strokeStyle = "rgba(255,255,255,.90)";
+  g.lineCap = "round"; g.lineWidth = r * 0.20;
+  g.beginPath();
+  g.moveTo(cx - r * 0.62, cy - r * 0.28);
+  g.quadraticCurveTo(cx - r * 0.60, cy - r * 0.72, cx - r * 0.28, cy - r * 0.88);
+  g.stroke();
+  g.fillStyle = "rgba(255,255,255,.85)";
+  g.beginPath(); g.arc(cx - r * 0.17, cy - r * 0.95, r * 0.07, 0, Math.PI * 2); g.fill();
+  g.restore();
+
+  // 5) cute faces on normal + gold balloons
+  if (kind === "normal" || kind === "gold") {
+    var ex = r * 0.20, ey = -r * 0.02, er = r * 0.135;
+    g.fillStyle = "#ffffff";
+    g.beginPath(); g.ellipse(cx - ex, cy + ey, er, er * 1.28, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(cx + ex, cy + ey, er, er * 1.28, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#23263f";
+    var pr = r * 0.058;
+    g.beginPath(); g.arc(cx - ex - r * 0.015, cy + ey - r * 0.045, pr, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(cx + ex - r * 0.015, cy + ey - r * 0.045, pr, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#ffffff";
+    var sp2 = r * 0.02;
+    g.beginPath(); g.arc(cx - ex - r * 0.03, cy + ey - r * 0.06, sp2, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(cx + ex - r * 0.03, cy + ey - r * 0.06, sp2, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#23263f"; g.lineWidth = Math.max(1.6, r * 0.075); g.lineCap = "round";
+    g.beginPath(); g.arc(cx, cy + r * 0.16, r * 0.22, Math.PI * 0.22, Math.PI * 0.78); g.stroke();
+    g.fillStyle = "rgba(255,110,140,.5)";
+    g.beginPath(); g.arc(cx - r * 0.36, cy + r * 0.18, r * 0.085, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(cx + r * 0.36, cy + r * 0.18, r * 0.085, 0, Math.PI * 2); g.fill();
+  }
+  if (kind === "gold") {
+    g.fillStyle = "rgba(255,255,255,.95)";
+    star8(cx + r * 0.55, cy - r * 0.75, r * 0.10);
+    star8(cx - r * 0.60, cy + r * 0.35, r * 0.07);
+  }
+
+  // 6) dark cartoon outline
+  body();
+  g.strokeStyle = outline; g.lineWidth = Math.max(2, r * 0.075);
+  g.lineJoin = "round"; g.stroke();
+
+  // knot
+  g.beginPath();
+  g.moveTo(cx - r * 0.10, cy + r * 1.06);
+  g.quadraticCurveTo(cx, cy + r * 1.24, cx + r * 0.10, cy + r * 1.06);
+  g.closePath();
+  g.fillStyle = kind === "bomb" ? "#3a3f58" : (kind === "gift" ? "#7b4fd0" : mixc(color, [12, 14, 26], 0.35));
+  g.fill();
+  g.strokeStyle = outline; g.lineWidth = Math.max(1.2, r * 0.05); g.stroke();
 
   SPRITES[id] = { cv: cv, half: S / 2, ss: SS };
   return SPRITES[id];
