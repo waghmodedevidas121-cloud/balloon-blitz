@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#070a18" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="assets/icon-192.png" />
+<link rel="icon" type="image/png" href="assets/icon-192.png" />
+<title>Balloon Blitz — Game Studio Base</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="bgDecor"></div>
+<canvas id="gameCanvas"></canvas>
+<div id="feverVignette"></div><div id="flashOverlay"></div>
+<div id="announceBanner"><div class="ann-main" id="annMain"></div><div class="ann-sub" id="annSub"></div></div>
+<div id="touchRippleContainer"></div>
+<div id="mobileObjBanner"></div>
+
+<div id="mobileHud" style="display:none">
+  <div class="hud-cluster">
+    <button class="hud-btn-circle" id="hudHomeBtn">⏸️</button>
+    <div class="hud-pill"><span class="hud-pill-lbl">MODE</span><span class="hud-pill-val" id="hudModeVal" style="font-size:13px">BLITZ</span></div>
+    <div class="hud-pill"><span class="hud-pill-lbl">BEST</span><span class="hud-pill-val" id="mBestVal" style="font-size:14px">0</span></div>
+  </div>
+  <div class="hud-cluster">
+    <div class="hud-pill"><span class="hud-pill-lbl">🪙</span><span class="hud-pill-val" id="mCoinVal" style="font-size:14px">0</span></div>
+    <div class="hud-pill"><span class="hud-pill-lbl">SCORE</span><span class="hud-pill-val" id="mScoreVal">0</span></div>
+    <div class="hud-pill val-gold"><span class="hud-pill-lbl">COMBO</span><span class="hud-pill-val" id="mComboVal">x1</span></div>
+    <div class="hud-pill val-cyan"><span class="hud-pill-lbl" id="mTargetLbl">TIME</span><span class="hud-pill-val" id="mTargetVal">60</span></div>
+  </div>
+</div>
+
+<div id="mobileBottomHud" style="display:none">
+  <div class="mobile-weapon-tag" id="mobileWeaponTag"><span id="mWIcon">👆</span><span id="mWName">Tap or Drag to Pop!</span></div>
+  <div class="fever-wrap">
+    <div class="fever-top"><span id="mFeverLabel">🔥 FEVER</span><span id="mFeverPct">0%</span></div>
+    <div class="mobile-fever-track"><div class="mobile-fever-fill" id="mFeverBar"></div></div>
+  </div>
+</div>
+
+<nav id="bottomNav" style="display:none">
+  <button data-screen="homeScreen">🏠<br/>Home</button>
+  <button data-screen="levelSelectScreen">🎯<br/>Maps</button>
+  <button data-screen="shopScreen">🛒<br/>Shop</button>
+  <button data-screen="boardScreen">🏅<br/>Ranks</button>
+  <button data-screen="dashboardScreen">👤<br/>Profile</button>
+</nav>
+
+<div class="overlay-view" id="homeScreen">
+  <div class="mobile-card hh-stage">
+    <div class="hh-fx" id="homeFx"></div>
+    <div class="hh-topbar">
+      <button class="hh-iconbtn" id="btnOpenSettings">⚙️</button>
+      <button class="hh-iconbtn" id="btnSound">🔊</button>
+      <button class="hh-iconbtn" id="btnFullscreen">⛶</button>
+    </div>
+    <div class="hh-hero">
+      <div class="hh-logo"><span class="hh-logo-top">BALLOON</span><span class="hh-logo-main">BLITZ</span></div>
+      <div class="hh-tag">POP • COMBO • CONQUER</div>
+    </div>
+    <button class="hh-play" id="btnPlayPrimary">▶ PLAY</button>
+    <div class="hh-modes">
+      <div class="hh-mode" id="btnPlayLevels"><div class="hh-mico">🎯</div><div><div class="hh-mtitle">CAMPAIGN</div><div class="hh-mdesc">Master 10 challenging levels</div><div class="hh-mmeta" id="campaignMeta"></div></div></div>
+      <div class="hh-mode" id="btnPlayInfinite"><div class="hh-mico">♾️</div><div><div class="hh-mtitle">SURVIVAL</div><div class="hh-mdesc">Survive endless waves</div><div class="hh-mmeta" id="survivalMeta"></div></div></div>
+      <div class="hh-mode" id="btnPlayBlitz"><div class="hh-mico">⚡</div><div><div class="hh-mtitle">60 SEC BLITZ</div><div class="hh-mdesc">Beat the clock. Chase the high score.</div><div class="hh-mmeta" id="blitzMeta"></div></div></div>
+    </div>
+    <div class="hh-stats">
+      <div class="hh-rank">🏅 <span id="homeRank">NOVICE</span></div>
+      <div class="hh-chips">
+        <div class="hh-chip"><div class="v" id="homeBest">0</div><div class="l">🏆 High Score</div></div>
+        <div class="hh-chip"><div class="v" id="homePops">0</div><div class="l">🎈 Total Pops</div></div>
+        <div class="hh-chip"><div class="v" id="homeStars">0⭐</div><div class="l">⭐ Stars</div></div>
+        <div class="hh-chip"><div class="v" id="homeCombo">x1</div><div class="l">🔥 Best Combo</div></div>
+      </div>
+    </div>
+    <button class="hh-dashlink" id="btnOpenDashboard">📊 Full stats & achievements ›</button>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="levelSelectScreen">
+  <div class="mobile-card">
+    <h2 style="font-size:22px;font-weight:900">CAMPAIGN MAP</h2>
+    <p style="color:var(--muted);font-size:11px;margin:4px 0 6px">Level 1 → Level 10 • earn 3 stars each</p>
+    <div class="campaign-progress" id="campaignProgress"></div>
+    <div class="mobile-levels-grid" id="mLevelsGrid"></div>
+    <div class="mobile-actions"><button class="btn-tap" id="btnBackLevels">⬅️ Home</button></div>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="shopScreen">
+  <div class="mobile-card">
+    <h2 style="font-size:22px;font-weight:900">🛒 SHOP</h2>
+    <div class="wallet"><div>🪙 <span id="coinBal">0</span></div><div>💎 <span id="gemBal">0</span></div></div>
+    <div class="section-title">Balloon Skins</div>
+    <div class="ach-list" id="skinsList"></div>
+    <div class="section-title">Pop Effects</div>
+    <div class="ach-list" id="effectsList"></div>
+    <div class="mobile-actions"><button class="btn-tap" id="btnBackShop">⬅️ Home</button></div>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="boardScreen">
+  <div class="mobile-card">
+    <h2 style="font-size:22px;font-weight:900">🏅 LEADERBOARD</h2>
+    <div class="board-tabs">
+      <button class="board-tab active" data-tab="local">Local</button>
+      <button class="board-tab" data-tab="weekly">Weekly</button>
+      <button class="board-tab" data-tab="mine">Mine</button>
+      <button class="board-tab" data-tab="global">Global</button>
+    </div>
+    <div class="ach-list" id="boardList"></div>
+    <div class="mobile-actions"><button class="btn-tap" id="btnBackBoard">⬅️ Home</button></div>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="dashboardScreen">
+  <div class="mobile-card">
+    <h2 style="font-size:22px;font-weight:900">👤 PLAYER PROFILE</h2>
+    <p style="color:var(--cyan);font-size:13px;font-weight:900;margin:4px 0" id="mPlayerRank"></p>
+    <div class="rank-bar"><div class="rank-fill" id="rankFill" style="width:5%"></div></div>
+    <p style="font-size:10px;color:var(--muted);margin-bottom:4px" id="rankNext"></p>
+    <div class="wallet"><div>🪙 <span id="coinBal2">0</span></div><div>💎 <span id="gemBal2">0</span></div></div>
+    <div class="m-stats-grid">
+      <div class="m-stat-box"><div class="m-stat-num" id="mDashPops">0</div><div class="m-stat-lbl">Total Pops</div></div>
+      <div class="m-stat-box"><div class="m-stat-num gold" id="mDashBlitz">0</div><div class="m-stat-lbl">Blitz High</div></div>
+      <div class="m-stat-box"><div class="m-stat-num gold" id="mDashInfinite">0</div><div class="m-stat-lbl">Survival High</div></div>
+      <div class="m-stat-box"><div class="m-stat-num" id="mDashWave">0</div><div class="m-stat-lbl">Highest Wave</div></div>
+      <div class="m-stat-box"><div class="m-stat-num" id="mDashCombo">x1</div><div class="m-stat-lbl">Highest Combo</div></div>
+      <div class="m-stat-box"><div class="m-stat-num gold" id="mDashStars">0 / 30</div><div class="m-stat-lbl">Stars ⭐</div></div>
+    </div>
+    <div class="section-title">🎯 Daily Missions</div>
+    <div class="ach-list" id="missionsList"></div>
+    <div class="section-title">🏆 Achievements</div>
+    <div class="ach-list" id="achievementsList"></div>
+    <div class="mobile-actions"><button class="btn-tap" id="btnBackDashboard">⬅️ Home</button></div>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="levelCompleteScreen">
+  <div class="mobile-card">
+    <h2 style="font-size:26px;font-weight:900;color:#33ff77">LEVEL COMPLETE!</h2>
+    <div class="result-stars" id="mLevelStars">⭐⭐⭐</div>
+    <p id="mLevelSummary" style="color:#a0aec0;font-size:12px"></p>
+    <div class="m-stats-grid">
+      <div class="m-stat-box"><div class="m-stat-num gold" id="mLevelScoreVal">0</div><div class="m-stat-lbl">Score</div></div>
+      <div class="m-stat-box"><div class="m-stat-num" id="mLevelTimeVal">0s</div><div class="m-stat-lbl">Time Left</div></div>
+    </div>
+    <p style="font-size:12px;color:var(--gold);font-weight:800" id="mLevelRewardVal"></p>
+    <div class="mobile-actions" style="margin-top:10px">
+      <button class="btn-tap" id="btnNextLevelMenu">🗺️ Map</button>
+      <button class="btn-tap" id="btnReplayLevel">🔄 Replay</button>
+      <button class="btn-tap primary" id="btnNextStage">Next ➡️</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="gameOverScreen">
+  <div class="mobile-card">
+    <h2 style="font-size:26px;font-weight:900;color:#ff5e7a" id="mGameOverTitle">GAME OVER</h2>
+    <p style="color:#a0aec0;font-size:12px;margin:4px 0 6px" id="mGameOverSub"></p>
+    <div id="mNewHighBadge" class="newhigh" style="display:none">🏆 NEW HIGH SCORE!</div>
+    <div class="m-stats-grid">
+      <div class="m-stat-box"><div class="m-stat-num gold" id="mEndScore">0</div><div class="m-stat-lbl">Final Score</div></div>
+      <div class="m-stat-box"><div class="m-stat-num" id="mEndPops">0</div><div class="m-stat-lbl">Popped</div></div>
+      <div class="m-stat-box"><div class="m-stat-num" id="mEndCombo">x1</div><div class="m-stat-lbl">Best Combo</div></div>
+      <div class="m-stat-box"><div class="m-stat-num" id="mEndBest">0</div><div class="m-stat-lbl">Best Score</div></div>
+    </div>
+    <p style="font-size:12px;color:var(--gold);font-weight:800" id="mEndReward"></p>
+    <p style="font-size:11px;color:var(--violet);font-weight:800" id="mEndWaveRow"></p>
+    <div class="mobile-actions" style="margin-top:6px">
+      <button class="btn-tap" id="btnAdCoins">📺 +🪙 Ad</button>
+      <button class="btn-tap" id="btnAdLife">📺 ❤️ Ad</button>
+    </div>
+    <div class="mobile-actions" style="margin-top:12px">
+      <button class="btn-tap" id="btnEndHome">🏠 Home</button>
+      <button class="btn-tap primary" id="btnRetry">▶ Replay</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="pauseScreen">
+  <div class="mobile-card" style="max-width:340px">
+    <h2 style="font-size:24px;font-weight:900">PAUSED ⏸️</h2>
+    <p style="font-size:11px;color:var(--muted);margin:6px 0 14px" id="pauseInfo"></p>
+    <div class="mobile-menu-list">
+      <button class="btn-tap primary" id="btnResume">▶ Resume</button>
+      <button class="btn-tap" id="btnRestartPause" style="margin-top:8px">🔄 Restart</button>
+      <button class="btn-tap" id="btnQuitHome" style="margin-top:8px">🏠 Home</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="settingsModal">
+  <div class="mobile-card" style="max-width:400px">
+    <h2 style="font-size:22px;font-weight:900;margin-bottom:10px">⚙️ SETTINGS</h2>
+    <div class="set-row"><div><div class="set-label">🔊 Sound</div><div class="set-sub">Music & pop effects</div></div><button class="toggle on" id="setSoundBtn">ON</button></div>
+    <div class="set-row"><div><div class="set-label">📳 Vibration</div><div class="set-sub">Haptic pop feedback</div></div><button class="toggle on" id="setVibBtn">ON</button></div>
+    <div class="set-row"><div><div class="set-label">✨ Effects</div><div class="set-sub">Particles & shake</div></div><button class="toggle on" id="setFxBtn">ON</button></div>
+    <div class="set-row"><div><div class="set-label">🎵 Music</div><div class="set-sub">Soft ambient BGM</div></div><button class="toggle on" id="setMusicBtn">ON</button></div>
+    <div class="set-row"><div><div class="set-label">⛶ Fullscreen</div><div class="set-sub">Immersive play</div></div><button class="toggle" id="setFullBtn">GO</button></div>
+    <div class="set-row"><div><div class="set-label">❓ How To Play</div><div class="set-sub">Rules & balloon guide</div></div><button class="toggle" id="btnHowTo">VIEW</button></div>
+    <div class="set-row"><div><div class="set-label">🔄 Reset Progress</div><div class="set-sub">Wipe stars & scores</div></div><button class="toggle" id="btnResetProgress" style="color:#ff5e7a;border-color:#ff5e7a">RESET</button></div>
+    <div class="mobile-actions" style="margin-top:10px"><button class="btn-tap primary" id="btnCloseSettings">Done ✓</button></div>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="howToModal">
+  <div class="mobile-card" style="max-width:400px;text-align:left">
+    <h2 style="font-size:20px;font-weight:900;margin-bottom:10px;text-align:center">❓ HOW TO PLAY</h2>
+    <div style="font-size:12px;line-height:1.7;color:#dfe7ff">
+      👆 <b>Tap / Drag / Multi-touch</b> to pop balloons.<br/>
+      🔴 10 • 🔵 20 • 🟢 30 • 🟡 <b>Gold 100</b><br/>
+      💣 <b>Bomb</b> = chain explosion.<br/>
+      ❄️ <b>Freeze</b> = 4.5s slow-motion.<br/>
+      🔥 Fill <b>FEVER</b> bar → 7s of 2X points.<br/>
+      🎁 <b>Gift Balloon</b> foda → khali padnara gift <b>catch</b> kara: <b>Gatling</b>, <b>Triple Spread</b>, <b>Laser</b>, <b>+Time / +Life</b>!<br/>
+      ♾️ <b>Survival:</b> escaped balloons cost ❤️. Every 20 pops = WAVE UP.<br/>
+      🪙 Earn coins per pop — spend them in the <b>Shop</b> on skins & effects.<br/>
+      🎵 Music: Kevin MacLeod (incompetech.com, CC-BY 4.0).
+    </div>
+    <div class="mobile-actions" style="margin-top:12px"><button class="btn-tap primary" id="btnCloseHowTo">Got it!</button></div>
+  </div>
+</div>
+
+<div class="overlay-view hidden" id="dailyModal">
+  <div class="mobile-card" style="max-width:340px">
+    <h2 style="font-size:24px;font-weight:900">🎁 DAILY REWARD</h2>
+    <p style="font-size:13px;color:var(--gold);font-weight:800;margin:10px 0" id="dailyRewardText"></p>
+    <div class="mobile-actions">
+      <button class="btn-tap" id="btnDailyLater">Later</button>
+      <button class="btn-tap primary" id="btnClaimDaily">Claim ✓</button>
+    </div>
+  </div>
+</div>
+
+<script src="data/content.js"></script>
+<script src="js/save.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/player.js"></script>
+<script src="js/economy.js"></script>
+<script src="js/achievements.js"></script>
+<script src="js/rewards.js"></script>
+<script src="js/leaderboard.js"></script>
+<script src="js/music.js"></script>
+<script src="js/ads.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
