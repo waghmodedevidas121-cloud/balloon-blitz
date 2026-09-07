@@ -5,7 +5,7 @@ BB.Save = (function () {
   var OLD_KEY = "balloon_blitz_mobile_save";
   function defaults() {
     return {
-      version: 1, totalPops: 0, blitzHighScore: 0, infiniteHighScore: 0,
+      version: 1, totalPops: 0, blitzHighScore: 0, infiniteHighScore: 0, slingshotHighScore: 0,
       maxWave: 0, maxCombo: 0, levelsProgress: { 1: { unlocked: true, stars: 0 } },
       puzzleProgress: { 1: { unlocked: true, stars: 0 } },
       achievements: {}, settings: { sound: true, vibration: true, effects: true, music: true },

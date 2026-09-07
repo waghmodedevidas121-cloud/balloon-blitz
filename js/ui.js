@@ -82,6 +82,9 @@ BB.UI = (function () {
     var pMeta = $("puzzleMeta");
     if (pMeta) pMeta.innerText = "Stage " + pNext + "/10 • " + pStars + "/30 ⭐";
 
+    var sMeta = $("slingMeta");
+    if (sMeta) sMeta.innerText = "Best: " + (u.slingshotHighScore || 0) + " • 5 Arrows";
+
     // Update Home daily banner
     var st = BB.Rewards.dailyStatus();
     var banner = $("btnHomeDaily");
@@ -453,6 +456,11 @@ BB.UI = (function () {
       s.innerText = "Puzzle unsolved • " + (r.unpopped || 0) + " balloons left";
       $("mEndWaveRow").innerText = "🧩 Tactical Puzzle " + (r.puzzleId || st.puzzle || 1);
       $("btnRetry").innerText = "🔄 Try Again";
+    } else if (st.mode === "SLING") {
+      t.innerText = "OUT OF ARROWS! 🏹";
+      s.innerText = "Slingshot run finished • " + r.pops + " balloons pierced!";
+      $("mEndWaveRow").innerText = "🏹 Best Score: " + (BB.Save.data.slingshotHighScore || r.score);
+      $("btnRetry").innerText = "▶ Play Again";
     } else if (st.mode === "INFINITE") {
       t.innerText = "SURVIVAL OVER"; s.innerText = "You survived " + r.pops + " pops!";
       $("mEndWaveRow").innerText = "🌊 Reached WAVE " + r.wave + " • Best " + (BB.Save.data.maxWave || r.wave);
@@ -485,6 +493,7 @@ BB.UI = (function () {
     $("btnPlayBlitz").addEventListener("click", startBlitz);
     $("btnPlayInfinite").addEventListener("click", startInfinite);
     $("btnPlayLevels").addEventListener("click", function () { currentMapTab = "campaign"; renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
+    if ($("btnPlaySlingshot")) $("btnPlaySlingshot").addEventListener("click", function () { BB.Audio.sound.init(); BB.Engine.startSlingshot(); });
     if ($("btnPlayPuzzle")) $("btnPlayPuzzle").addEventListener("click", function () { BB.Audio.sound.init(); currentMapTab = "puzzles"; renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
     if ($("tabCampaign")) $("tabCampaign").addEventListener("click", function () { currentMapTab = "campaign"; renderLevels(); });
     if ($("tabPuzzles")) $("tabPuzzles").addEventListener("click", function () { currentMapTab = "puzzles"; renderLevels(); });
@@ -553,6 +562,7 @@ BB.UI = (function () {
       if (st.mode === "BLITZ") startBlitz();
       else if (st.mode === "INFINITE") startInfinite();
       else if (st.mode === "PUZZLE") BB.Engine.startPuzzle(st.puzzle);
+      else if (st.mode === "SLING") BB.Engine.startSlingshot();
       else startLevel(currentLevelId);
     });
     $("btnAdCoins").addEventListener("click", function () {

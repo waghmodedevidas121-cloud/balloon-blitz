@@ -42,6 +42,7 @@ BB.Player = (function () {
     dd.gamesPlayed = (dd.gamesPlayed || 0) + 1;
     if (mode === "BLITZ" && r.score > (dd.blitzHighScore || 0)) dd.blitzHighScore = r.score;
     if (mode === "INFINITE" && r.score > (dd.infiniteHighScore || 0)) dd.infiniteHighScore = r.score;
+    if (mode === "SLING" && r.score > (dd.slingshotHighScore || 0)) dd.slingshotHighScore = r.score;
     if ((r.combo || 1) > (dd.maxCombo || 0)) dd.maxCombo = r.combo;
     if ((r.wave || 0) > (dd.maxWave || 0)) dd.maxWave = r.wave;
     coins += Math.floor((r.score || 0) / 40) + (r.pops || 0);

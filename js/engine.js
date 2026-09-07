@@ -12,6 +12,7 @@ var mousePos = { x: 0, y: 0 };
 var balloons = [], particles = [], textPopups = [], shockwaves = [], lasers = [], powerupDrops = [], needleRays = [];
 var currentWeapon = "pistol", weaponTimer = 0, weaponShownSec = -1;
 var bossBalloon = null, bossHp = 0, maxBossHp = 0;
+var slingshotDarts = [], slingshotArrowsLeft = 5, slingshotTotalPops = 0, slingshotState = { dragging: false, curX: 0, curY: 0 };
 function sound() { return BB.Audio.sound; }
 function effectsOn() { return BB.Save.data.settings.effects !== false; }
 
@@ -722,6 +723,219 @@ class MobileNeedleRay {
     ctx.restore();
   }
 }
+
+class SlingshotProjectile {
+  constructor(x, y, vx, vy) {
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    this.radius = 12;
+    this.life = 4.2;
+    this.trail = [];
+    this.pierceCount = 0;
+  }
+  update(dt) {
+    this.life -= dt;
+    this.vy += 320 * dt;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+
+    if (this.x < this.radius) {
+      this.x = this.radius;
+      this.vx = -this.vx * 0.75;
+      triggerShake(4, 0.1);
+    } else if (this.x > width - this.radius) {
+      this.x = width - this.radius;
+      this.vx = -this.vx * 0.75;
+      triggerShake(4, 0.1);
+    }
+
+    this.trail.push({ x: this.x, y: this.y, a: 1 });
+    if (this.trail.length > 12) this.trail.shift();
+    for (var i = 0; i < this.trail.length; i++) this.trail[i].a -= dt * 2.5;
+
+    for (var b = balloons.length - 1; b >= 0; b--) {
+      var bl = balloons[b];
+      if (!bl.popped && bl.containsPoint(this.x, this.y)) {
+        this.pierceCount++;
+        popBalloon(bl);
+        triggerShake(6, 0.15);
+        textPopups.push(new MobileTextPopup("PIERCE x" + this.pierceCount + "! 🏹", this.x, this.y - 20, "#ffbe0b"));
+      }
+    }
+  }
+  draw() {
+    ctx.save();
+    for (var i = 1; i < this.trail.length; i++) {
+      var p1 = this.trail[i - 1], p2 = this.trail[i];
+      ctx.strokeStyle = "rgba(255, 190, 11, " + Math.max(0, p2.a * 0.8) + ")";
+      ctx.lineWidth = 4.5 * p2.a;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+    }
+
+    var angle = Math.atan2(this.vy, this.vx);
+    ctx.translate(this.x, this.y);
+    ctx.rotate(angle);
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-16, 0);
+    ctx.lineTo(14, 0);
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffbe0b";
+    ctx.strokeStyle = "#1a1000";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(22, 0);
+    ctx.lineTo(8, -8);
+    ctx.lineTo(12, 0);
+    ctx.lineTo(8, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#ff2a5f";
+    ctx.beginPath();
+    ctx.moveTo(-16, 0);
+    ctx.lineTo(-22, -6);
+    ctx.lineTo(-18, 0);
+    ctx.lineTo(-22, 6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+function drawSlingshot() {
+  if (gameMode !== "SLING") return;
+  var slingX = width / 2;
+  var slingY = height - 90;
+  var leftForkX = slingX - 28, leftForkY = slingY - 35;
+  var rightForkX = slingX + 28, rightForkY = slingY - 35;
+
+  ctx.save();
+
+  if (slingshotState.dragging && slingshotArrowsLeft > 0) {
+    var dx = slingX - slingshotState.curX;
+    var dy = (slingY - 20) - slingshotState.curY;
+    var dist = Math.hypot(dx, dy);
+    if (dist > 15) {
+      var speed = Math.min(1050, dist * 8.5);
+      var vx = (dx / dist) * speed, vy = (dy / dist) * speed;
+      var simX = slingX, simY = slingY - 30;
+      var simVx = vx, simVy = vy;
+      var simDt = 0.035;
+      for (var s = 0; s < 18; s++) {
+        simVy += 320 * simDt;
+        simX += simVx * simDt;
+        simY += simVy * simDt;
+        if (simX < 12 || simX > width - 12) simVx = -simVx * 0.75;
+        var dotAlpha = Math.max(0.1, 1 - (s / 18));
+        ctx.fillStyle = "rgba(255, 190, 11, " + dotAlpha + ")";
+        ctx.shadowColor = "#ffbe0b";
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.arc(simX, simY, 4 * dotAlpha, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  var pouchX = slingshotState.dragging ? slingshotState.curX : slingX;
+  var pouchY = slingshotState.dragging ? slingshotState.curY : slingY - 20;
+
+  ctx.strokeStyle = "#3e2723";
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+
+  ctx.beginPath();
+  ctx.moveTo(leftForkX, leftForkY);
+  ctx.lineTo(pouchX, pouchY);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(rightForkX, rightForkY);
+  ctx.lineTo(pouchX, pouchY);
+  ctx.stroke();
+
+  ctx.fillStyle = "#8d6e63";
+  ctx.strokeStyle = "#4e342e";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(pouchX, pouchY, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  if (slingshotArrowsLeft > 0) {
+    ctx.save();
+    var arrowAngle = slingshotState.dragging
+      ? Math.atan2((slingY - 20) - pouchY, slingX - pouchX)
+      : -Math.PI / 2;
+    ctx.translate(pouchX, pouchY);
+    ctx.rotate(arrowAngle);
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(32, 0);
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffbe0b";
+    ctx.beginPath();
+    ctx.moveTo(38, 0);
+    ctx.lineTo(26, -6);
+    ctx.lineTo(26, 6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#ff2a5f";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-6, -4);
+    ctx.lineTo(-6, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.shadowColor = "rgba(0,0,0,0.5)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 4;
+
+  ctx.strokeStyle = "#8d4925";
+  ctx.lineWidth = 10;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  ctx.beginPath();
+  ctx.moveTo(leftForkX, leftForkY);
+  ctx.lineTo(slingX, slingY);
+  ctx.lineTo(rightForkX, rightForkY);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(slingX, slingY);
+  ctx.lineTo(slingX, slingY + 50);
+  ctx.stroke();
+
+  ctx.strokeStyle = "#ffd000";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(slingX, slingY + 22, 6, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function sfxPowerup() {
   var s = sound(); if (!s.ctx || s.muted || !s.settings().sound) return;
   try {
@@ -847,6 +1061,19 @@ function startBlitz() {
   BB.Save.data.gamesPlayed = (BB.Save.data.gamesPlayed || 0) + 1; BB.Save.save();
   initBalloons(); updateHud(); BB.UI.show(null);
   BB.UI.announce("⚡ BLITZ!", "60 seconds — go!", "#ffd23f");
+}
+function startSlingshot() {
+  sound().init();
+  try { BB.Music.play("blitz"); } catch (e) {}
+  BB.Ads.notifyRunStart(); lockInput();
+  gameMode = "SLING"; gameState = "PLAYING"; resetRun();
+  slingshotArrowsLeft = 5;
+  slingshotTotalPops = 0;
+  slingshotDarts.length = 0;
+  slingshotState.dragging = false;
+  BB.Save.data.gamesPlayed = (BB.Save.data.gamesPlayed || 0) + 1; BB.Save.save();
+  initBalloons(); updateHud(); BB.UI.show(null);
+  BB.UI.announce("🏹 SLINGSHOT SHOOTER", "Pull back & release to fire!", "#f97316");
 }
 function startInfinite() {
   sound().init(); BB.Music.playMode("survival");
@@ -1222,6 +1449,15 @@ function updateHud() {
       banner.style.display = "block";
       banner.innerText = "🧩 PUZZLE " + currentPuzzleId + ": " + pz.name + " (" + puzzleActiveBalloons + " left)";
     }
+  } else if (gameMode === "SLING") {
+    document.getElementById("hudModeVal").innerText = "SLING";
+    document.getElementById("mTargetLbl").innerText = "ARROWS";
+    document.getElementById("mTargetVal").innerText = "🏹 " + slingshotArrowsLeft;
+    var banner = document.getElementById("mobileObjBanner");
+    if (banner) {
+      banner.style.display = "block";
+      banner.innerText = "🏹 SLINGSHOT: Pull & shoot! (" + slingshotArrowsLeft + " arrows left)";
+    }
   }
   updateWeaponBadge();
 }
@@ -1383,6 +1619,22 @@ function loop(curT) {
   for (var j = shockwaves.length - 1; j >= 0; j--) { var s = shockwaves[j]; s.update(dt); s.draw(); if (s.life <= 0) shockwaves.splice(j, 1); }
   for (var k = particles.length - 1; k >= 0; k--) { var p = particles[k]; p.update(dt); p.draw(); if (p.life <= 0) particles.splice(k, 1); }
   for (var t = textPopups.length - 1; t >= 0; t--) { var tp = textPopups[t]; tp.update(dt); tp.draw(); if (tp.life <= 0) textPopups.splice(t, 1); }
+  if (gameMode === "SLING") {
+    for (var sd = slingshotDarts.length - 1; sd >= 0; sd--) {
+      var sDart = slingshotDarts[sd];
+      if (!frozen) sDart.update(dt);
+      sDart.draw();
+      if (sDart.life <= 0 || sDart.y > height + 60) {
+        slingshotDarts.splice(sd, 1);
+        if (slingshotArrowsLeft <= 0 && slingshotDarts.length === 0) {
+          setTimeout(function () {
+            if (gameState === "PLAYING" && gameMode === "SLING") endGame();
+          }, 600);
+        }
+      }
+    }
+    drawSlingshot();
+  }
   if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0 && combo > 1) { combo = 1; updateHud(); } }
   if (gameState === "PLAYING" && (gameMode === "BLITZ" || gameMode === "LEVELS")) {
     timeLeft -= dt;
@@ -1411,13 +1663,53 @@ BB.Engine = {
     window.addEventListener("pointerdown", function (e) {
       BB.Audio.sound.init(); if (isUiTouch(e)) return;
       if (Date.now() < inputLockUntil) return;
+      if (gameMode === "SLING") {
+        if (e.clientY > height * 0.45) {
+          slingshotState.dragging = true;
+          slingshotState.curX = e.clientX;
+          slingshotState.curY = e.clientY;
+          return;
+        }
+      }
       if (e.pointerId !== undefined) dragStart[e.pointerId] = { x: e.clientX, y: e.clientY };
       handleTouchAt(e.clientX, e.clientY);
     });
-    window.addEventListener("pointerup", function (e) { if (e.pointerId !== undefined) delete dragStart[e.pointerId]; });
-    window.addEventListener("pointercancel", function (e) { if (e.pointerId !== undefined) delete dragStart[e.pointerId]; });
+    window.addEventListener("pointermove", function (e) {
+      if (gameMode === "SLING" && slingshotState.dragging) {
+        slingshotState.curX = e.clientX;
+        slingshotState.curY = e.clientY;
+      }
+    });
+    window.addEventListener("pointerup", function (e) {
+      if (gameMode === "SLING" && slingshotState.dragging) {
+        slingshotState.dragging = false;
+        var slingX = width / 2, slingY = height - 90;
+        var dx = slingX - e.clientX, dy = (slingY - 20) - e.clientY;
+        var dist = Math.hypot(dx, dy);
+        if (dist > 18 && slingshotArrowsLeft > 0) {
+          slingshotArrowsLeft--;
+          var speed = Math.min(1100, dist * 8.5);
+          var vx = (dx / dist) * speed, vy = (dy / dist) * speed;
+          slingshotDarts.push(new SlingshotProjectile(slingX, slingY - 30, vx, vy));
+          sound().pop(1);
+          triggerShake(5, 0.12);
+          updateHud();
+        }
+        return;
+      }
+      if (e.pointerId !== undefined) delete dragStart[e.pointerId];
+    });
+    window.addEventListener("pointercancel", function (e) {
+      if (gameMode === "SLING") slingshotState.dragging = false;
+      if (e.pointerId !== undefined) delete dragStart[e.pointerId];
+    });
     window.addEventListener("touchmove", function (e) {
       BB.Audio.sound.init(); if (isUiTouch(e)) return;
+      if (gameMode === "SLING" && slingshotState.dragging && e.touches.length > 0) {
+        slingshotState.curX = e.touches[0].clientX;
+        slingshotState.curY = e.touches[0].clientY;
+        return;
+      }
       var now = performance.now(); if (now - lastMovePop < 140) return;
       for (var i = 0; i < e.changedTouches.length; i++) {
         var t = e.changedTouches[i];
@@ -1445,5 +1737,6 @@ BB.Engine = {
     return { mode: gameMode, state: gameState, score: score, combo: combo, lives: lives, wave: wave, level: currentLevelId, puzzle: currentPuzzleId };
   },
   startPuzzle: startPuzzle,
+  startSlingshot: startSlingshot,
   resetPuzzle: function () { if (gameMode === "PUZZLE") startPuzzle(currentPuzzleId); }
 };
