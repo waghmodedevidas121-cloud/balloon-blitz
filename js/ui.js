@@ -49,6 +49,7 @@ BB.UI = (function () {
     if (id === "dashboardScreen") renderProfile();
     if (id === "shopScreen") renderShop();
     if (id === "boardScreen") renderBoard("local");
+    if (id === "dailyModal") renderDailyGrid();
   }
   function wallet() {
     var u = BB.Save.data;
@@ -67,6 +68,23 @@ BB.UI = (function () {
     $("campaignMeta").innerText = "Stage " + Math.min(10, un) + "/10 • " + stars + "/30 ⭐";
     $("survivalMeta").innerText = "Best: " + (u.infiniteHighScore || 0) + " • Wave " + (u.maxWave || 1);
     $("blitzMeta").innerText = "Best: " + (u.blitzHighScore || 0);
+    // Update Home daily banner
+    var st = BB.Rewards.dailyStatus();
+    var banner = $("btnHomeDaily");
+    if (banner) {
+      var bTitle = banner.querySelector(".daily-banner-title");
+      var bSub = banner.querySelector(".daily-banner-sub");
+      var bChip = banner.querySelector(".daily-claim-chip");
+      if (!st.claimable) {
+        if (bTitle) bTitle.innerText = "DAY " + st.streak + " CLAIMED ✓";
+        if (bSub) bSub.innerText = "Streak: " + st.streak + " days • Next reward tomorrow!";
+        if (bChip) { bChip.innerText = "VIEW"; bChip.style.background = "rgba(255,255,255,0.15)"; bChip.style.color = "#fff"; bChip.style.border = "none"; }
+      } else {
+        if (bTitle) bTitle.innerText = "DAILY REWARD READY!";
+        if (bSub) bSub.innerText = "Day " + st.streak + " waiting • Free coins & gems!";
+        if (bChip) { bChip.innerText = "CLAIM"; bChip.style.background = "linear-gradient(180deg, #ffd000 0%, #ff8c00 100%)"; bChip.style.color = "#1c0f00"; }
+      }
+    }
     wallet(); syncSettings();
   }
   function renderLevels() {
@@ -241,8 +259,22 @@ BB.UI = (function () {
     if ($("btnOpenDashboardHeader")) $("btnOpenDashboardHeader").addEventListener("click", function () { gameState = "HOME"; show("dashboardScreen"); });
     if ($("btnOpenShopHeader1")) $("btnOpenShopHeader1").addEventListener("click", function () { gameState = "HOME"; show("shopScreen"); });
     if ($("btnOpenShopHeader2")) $("btnOpenShopHeader2").addEventListener("click", function () { gameState = "HOME"; show("shopScreen"); });
-    if ($("btnHomeDaily")) $("btnHomeDaily").addEventListener("click", function () { gameState = "HOME"; show("dailyModal"); });
-    $("btnOpenSettings").addEventListener("click", function () { syncSettings(); show("settingsModal"); });
+    if ($("btnHomeDaily")) $("btnHomeDaily").addEventListener("click", function () {
+      renderDailyGrid();
+      gameState = "HOME";
+      show("dailyModal");
+    });
+    $("btnClaimDaily").addEventListener("click", function () {
+      var r = BB.Rewards.claimDaily();
+      if (r) {
+        BB.Audio.sound.victory();
+        renderDailyGrid();
+        wallet();
+        refreshHome();
+        announce("🎁 REWARD CLAIMED!", "+" + (r.prize.coins ? r.prize.coins + " Coins" : r.prize.gems + " Gems"), "#ffd000");
+        setTimeout(function () { gameState = "HOME"; show("homeScreen"); }, 1400);
+      }
+    });
     $("btnCloseSettings").addEventListener("click", function () { show("homeScreen"); gameState = "HOME"; });
     $("btnHowTo").addEventListener("click", function () { show("howToModal"); });
     $("btnCloseHowTo").addEventListener("click", function () { show("settingsModal"); });
@@ -367,13 +399,60 @@ BB.UI = (function () {
     var fx = $("homeFx");
     if (fx) fx.innerHTML = "";
   }
+  function renderDailyGrid() {
+    var g = $("dailyCalendarGrid");
+    if (!g) return;
+    g.innerHTML = "";
+    var st = BB.Rewards.dailyStatus();
+    var todayClaimed = !st.claimable;
+    var curStreak = st.streak;
+
+    $("dailyRewardText").innerText = todayClaimed
+      ? "Day " + curStreak + " collected! Next reward unlocks tomorrow ⏰"
+      : "Day " + curStreak + " reward is waiting! Tap claim below!";
+
+    BB.Content.DAILY.forEach(function(d) {
+      var card = document.createElement("div");
+      var isClaimed = d.day < curStreak || (d.day === curStreak && todayClaimed);
+      var isActive = d.day === curStreak && !todayClaimed;
+      var isMega = d.day === 7;
+
+      card.className = "daily-day-card" +
+        (isMega ? " mega-card" : "") +
+        (isActive ? " active" : "") +
+        (isClaimed ? " claimed" : "");
+
+      var badge = isClaimed
+        ? '<div class="daily-day-badge">✓</div>'
+        : (isActive ? '<div class="daily-day-badge" style="background:#ffd000;color:#1a0f00">READY</div>' : '');
+
+      card.innerHTML = badge +
+        '<div class="daily-day-num">Day ' + d.day + '</div>' +
+        '<div class="daily-day-ico">' + d.icon + '</div>' +
+        '<div class="daily-day-rew">' + d.label + '</div>';
+
+      g.appendChild(card);
+    });
+
+    var claimBtn = $("btnClaimDaily");
+    if (claimBtn) {
+      if (todayClaimed) {
+        claimBtn.innerText = "✓ COLLECTED TODAY";
+        claimBtn.classList.remove("primary");
+        claimBtn.disabled = true;
+        claimBtn.style.opacity = "0.55";
+      } else {
+        claimBtn.innerText = "🎁 CLAIM REWARD";
+        claimBtn.classList.add("primary");
+        claimBtn.disabled = false;
+        claimBtn.style.opacity = "1";
+      }
+    }
+  }
   function dailyCheck() {
     var st = BB.Rewards.dailyStatus();
+    renderDailyGrid();
     if (st.claimable && (BB.Save.data.gamesPlayed || 0) >= 0) {
-      var prize = BB.Content.DAILY[(st.streak - 1) % BB.Content.DAILY.length];
-      $("dailyRewardText").innerText = "Day " + st.streak + ": " +
-        (prize.coins ? prize.coins + " coins 🪙" : prize.gems + " gems 💎") + " waiting!";
-      $("btnClaimDaily").style.display = "flex";
       gameState = "HOME"; show("dailyModal");
       return true;
     }

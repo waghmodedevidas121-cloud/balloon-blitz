@@ -50,8 +50,13 @@ BB.Content = {
     { id: "life", name: "+1 Life", icon: "❤️", color: "#ff5e7a" }
   ],
   DAILY: [
-    { coins: 50 }, { coins: 75 }, { coins: 100 }, { gems: 1 },
-    { coins: 150 }, { coins: 200 }, { gems: 3 }
+    { day: 1, coins: 50, icon: "🪙", label: "+50" },
+    { day: 2, coins: 100, icon: "🪙", label: "+100" },
+    { day: 3, coins: 150, icon: "🪙", label: "+150" },
+    { day: 4, gems: 2, icon: "💎", label: "+2 Gems" },
+    { day: 5, coins: 250, icon: "🪙", label: "+250" },
+    { day: 6, coins: 400, icon: "🪙", label: "+400" },
+    { day: 7, coins: 800, gems: 5, icon: "👑", label: "800 + 5💎" }
   ],
   MISSIONS: [
     { id: "m_pop50",  name: "Warm Fingers", desc: "Pop 50 balloons today",  target: 50,   reward: { coins: 50 }, metric: "pop" },

@@ -296,12 +296,18 @@
 </div>
 
 <div class="overlay-view hidden" id="dailyModal">
-  <div class="mobile-card" style="max-width:340px">
-    <h2 style="font-size:24px;font-weight:900">🎁 DAILY REWARD</h2>
-    <p style="font-size:13px;color:var(--gold);font-weight:800;margin:10px 0" id="dailyRewardText"></p>
-    <div class="mobile-actions">
-      <button class="btn-tap" id="btnDailyLater">Later</button>
-      <button class="btn-tap primary" id="btnClaimDaily">Claim ✓</button>
+  <div class="mobile-card daily-reward-card" style="max-width:400px">
+    <h2 style="font-size:22px;font-weight:900;letter-spacing:1px;margin-bottom:2px">🎁 DAILY REWARDS</h2>
+    <p style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:12px" id="dailyRewardText">Login 7 days in a row for the Mega Chest!</p>
+    
+    <!-- 7-Day Reward Cards Grid -->
+    <div class="daily-calendar-grid" id="dailyCalendarGrid">
+      <!-- Generated dynamically by UI -->
+    </div>
+
+    <div class="mobile-actions" style="margin-top:14px">
+      <button class="btn-tap" id="btnDailyLater">CLOSE</button>
+      <button class="btn-tap primary" id="btnClaimDaily">🎁 CLAIM REWARD</button>
     </div>
   </div>
 </div>

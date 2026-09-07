@@ -4,15 +4,22 @@ BB.Rewards = (function () {
   function today() { return new Date().toISOString().slice(0, 10); }
   function yesterday() { var t = new Date(Date.now() - 864e5); return t.toISOString().slice(0, 10); }
   function dailyStatus() {
-    var r = BB.Save.data.rewards;
-    if (r.lastDaily === today()) return { claimable: false, streak: r.streak };
-    return { claimable: true, streak: (r.lastDaily === yesterday()) ? r.streak + 1 : 1 };
+    var r = BB.Save.data.rewards || {};
+    var last = r.lastDaily || "";
+    var curStreak = r.streak || 0;
+    if (last === today()) {
+      return { claimable: false, streak: Math.max(1, curStreak) };
+    }
+    if (last === yesterday()) {
+      var nextStreak = (curStreak % 7) + 1;
+      return { claimable: true, streak: nextStreak };
+    }
+    return { claimable: true, streak: 1 };
   }
   function claimDaily() {
     var r = BB.Save.data.rewards, st = dailyStatus();
     if (!st.claimable) return null;
-    r.streak = ((r.streak || 0) >= 7 || st.streak === 1 && r.lastDaily !== yesterday()) ? st.streak : st.streak;
-    if (r.streak > 7) r.streak = 1;
+    r.streak = st.streak;
     r.lastDaily = today();
     var prize = BB.Content.DAILY[(r.streak - 1) % BB.Content.DAILY.length];
     if (prize.coins) BB.Save.data.coins = (BB.Save.data.coins || 0) + prize.coins;
