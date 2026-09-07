@@ -361,26 +361,7 @@ BB.UI = (function () {
       w.appendChild(d);
     }
     var fx = $("homeFx");
-    if (fx) {
-      for (var j = 0; j < 16; j++) {
-        var p = document.createElement("div"); p.className = "hh-dot";
-        var ss = 2 + Math.random() * 4;
-        p.style.width = ss + "px"; p.style.height = ss + "px";
-        p.style.left = (Math.random() * 100) + "%"; p.style.bottom = "-10px";
-        p.style.background = cols[j % cols.length];
-        p.style.boxShadow = "0 0 8px " + cols[j % cols.length];
-        p.style.animationDuration = (6 + Math.random() * 7) + "s";
-        p.style.animationDelay = (-Math.random() * 8) + "s";
-        fx.appendChild(p);
-      }
-      ["🎈", "🎈", "🎈", "✨", "🎈", "✨", "🎈"].forEach(function (e) {
-        var m = document.createElement("div"); m.className = "hh-mini"; m.textContent = e;
-        m.style.left = (4 + Math.random() * 92) + "%"; m.style.bottom = "-16px";
-        m.style.animationDuration = (8 + Math.random() * 8) + "s";
-        m.style.animationDelay = (-Math.random() * 9) + "s";
-        fx.appendChild(m);
-      });
-    }
+    if (fx) fx.innerHTML = "";
   }
   function dailyCheck() {
     var st = BB.Rewards.dailyStatus();

@@ -90,25 +90,39 @@ function getSprite(key, color, kind, radius) {
   g.beginPath(); g.arc(cx - r * 0.17, cy - r * 0.95, r * 0.07, 0, Math.PI * 2); g.fill();
   g.restore();
 
-  // 5) cute faces on normal + gold balloons
+  // 5) cute cartoon faces (expressive variety like the reference image!)
   if (kind === "normal" || kind === "gold") {
-    var ex = r * 0.20, ey = -r * 0.02, er = r * 0.135;
-    g.fillStyle = "#ffffff";
-    g.beginPath(); g.ellipse(cx - ex, cy + ey, er, er * 1.28, 0, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.ellipse(cx + ex, cy + ey, er, er * 1.28, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = "#23263f";
-    var pr = r * 0.058;
-    g.beginPath(); g.arc(cx - ex - r * 0.015, cy + ey - r * 0.045, pr, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.arc(cx + ex - r * 0.015, cy + ey - r * 0.045, pr, 0, Math.PI * 2); g.fill();
-    g.fillStyle = "#ffffff";
-    var sp2 = r * 0.02;
-    g.beginPath(); g.arc(cx - ex - r * 0.03, cy + ey - r * 0.06, sp2, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.arc(cx + ex - r * 0.03, cy + ey - r * 0.06, sp2, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = "#23263f"; g.lineWidth = Math.max(1.6, r * 0.075); g.lineCap = "round";
-    g.beginPath(); g.arc(cx, cy + r * 0.16, r * 0.22, Math.PI * 0.22, Math.PI * 0.78); g.stroke();
-    g.fillStyle = "rgba(255,110,140,.5)";
-    g.beginPath(); g.arc(cx - r * 0.36, cy + r * 0.18, r * 0.085, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.arc(cx + r * 0.36, cy + r * 0.18, r * 0.085, 0, Math.PI * 2); g.fill();
+    var ex = r * 0.22, ey = -r * 0.02, er = r * 0.15;
+    if (key === "RED") {
+      // Red balloon: adorable wink like reference image! 😉
+      g.strokeStyle = "#1e2238"; g.lineWidth = Math.max(2, r * 0.09); g.lineCap = "round";
+      g.beginPath(); g.arc(cx - ex, cy + ey + r * 0.03, er * 0.85, Math.PI * 1.15, Math.PI * 1.85); g.stroke();
+      // Right eye big and open
+      g.fillStyle = "#ffffff";
+      g.beginPath(); g.ellipse(cx + ex, cy + ey, er, er * 1.25, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#1e2238";
+      g.beginPath(); g.arc(cx + ex, cy + ey - r * 0.02, r * 0.08, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#ffffff";
+      g.beginPath(); g.arc(cx + ex - r * 0.03, cy + ey - r * 0.05, r * 0.035, 0, Math.PI * 2); g.fill();
+    } else {
+      // Big friendly curious cartoon eyes
+      g.fillStyle = "#ffffff";
+      g.beginPath(); g.ellipse(cx - ex, cy + ey, er, er * 1.25, 0, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.ellipse(cx + ex, cy + ey, er, er * 1.25, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#1e2238";
+      g.beginPath(); g.arc(cx - ex, cy + ey - r * 0.02, r * 0.08, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(cx + ex, cy + ey - r * 0.02, r * 0.08, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#ffffff";
+      g.beginPath(); g.arc(cx - ex - r * 0.03, cy + ey - r * 0.05, r * 0.035, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(cx + ex - r * 0.03, cy + ey - r * 0.05, r * 0.035, 0, Math.PI * 2); g.fill();
+    }
+    // Cute smile
+    g.strokeStyle = "#1e2238"; g.lineWidth = Math.max(2, r * 0.08); g.lineCap = "round";
+    g.beginPath(); g.arc(cx, cy + r * 0.16, r * 0.22, Math.PI * 0.18, Math.PI * 0.82); g.stroke();
+    // Rosy blush cheeks
+    g.fillStyle = "rgba(255, 105, 140, 0.45)";
+    g.beginPath(); g.arc(cx - r * 0.38, cy + r * 0.18, r * 0.09, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(cx + r * 0.38, cy + r * 0.18, r * 0.09, 0, Math.PI * 2); g.fill();
   }
   if (kind === "gold") {
     g.fillStyle = "rgba(255,255,255,.95)";
@@ -203,21 +217,28 @@ class MobileBalloon {
       this.spec.isBomb ? "bomb" : this.spec.isGift ? "gift" : this.spec.isGold ? "gold" : this.spec.isFreeze ? "freeze" : "normal");
     // live vector icons (crisp on every device)
     if (this.spec.isBomb) {
-      // fuse from crown
-      ctx.strokeStyle = "#8a7a6a"; ctx.lineWidth = Math.max(1.5, r * 0.09); ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(x, y - r * 1.12); ctx.quadraticCurveTo(x + r * 0.28, y - r * 1.38, x + r * 0.42, y - r * 1.28); ctx.stroke();
-      // spark star
-      var sx = x + r * 0.42, sy = y - r * 1.28;
-      ctx.strokeStyle = "#ffb340"; ctx.lineWidth = Math.max(1.2, r * 0.08);
+      // Brass collar at top
+      ctx.fillStyle = "#d35400";
+      ctx.fillRect(x - r * 0.12, y - r * 1.18, r * 0.24, r * 0.08);
+      // Clean short curved wick
+      ctx.strokeStyle = "#dcdde1"; ctx.lineWidth = Math.max(1.5, r * 0.08); ctx.lineCap = "round";
       ctx.beginPath();
-      for (var b1 = 0; b1 < 4; b1++) {
-        var a1 = b1 * Math.PI / 2 + 0.4;
-        ctx.moveTo(sx + Math.cos(a1) * r * 0.10, sy + Math.sin(a1) * r * 0.10);
-        ctx.lineTo(sx + Math.cos(a1) * r * 0.24, sy + Math.sin(a1) * r * 0.24);
-      }
+      ctx.moveTo(x, y - r * 1.18);
+      ctx.quadraticCurveTo(x + r * 0.16, y - r * 1.34, x + r * 0.26, y - r * 1.28);
       ctx.stroke();
-      ctx.fillStyle = "#ffe9a8";
-      ctx.beginPath(); ctx.arc(sx, sy, Math.max(1.2, r * 0.07), 0, Math.PI * 2); ctx.fill();
+      // Glowing spark at wick tip (clean circular star)
+      var sx = x + r * 0.26, sy = y - r * 1.28;
+      ctx.fillStyle = "#ff7675";
+      ctx.beginPath(); ctx.arc(sx, sy, Math.max(2, r * 0.10), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffeaa7";
+      ctx.beginPath(); ctx.arc(sx, sy, Math.max(1, r * 0.05), 0, Math.PI * 2); ctx.fill();
+      // Center hazard badge (bold cartoon exclamation mark in danger circle)
+      ctx.fillStyle = "#ff4757";
+      ctx.beginPath(); ctx.arc(x, y + r * 0.05, r * 0.32, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 " + Math.floor(r * 0.44) + "px Arial";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("!", x, y + r * 0.06);
     } else if (this.spec.isGift) {
       // ribbon box icon
       var bw = r * 0.62, bh = r * 0.52, byy = y + r * 0.06;
