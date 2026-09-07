@@ -158,6 +158,7 @@
     <div class="map-mode-tabs">
       <button class="map-tab active" id="tabCampaign">🎯 CAMPAIGN</button>
       <button class="map-tab" id="tabPuzzles">🧩 PUZZLES</button>
+      <button class="map-tab" id="tabSlingshot">🏹 SLING</button>
     </div>
     <div id="campaignMapContainer">
       <div class="campaign-progress" id="campaignProgress">Progress: 0/1500 ⭐ • 0/500 cleared</div>
@@ -193,6 +194,20 @@
         <div class="smc-title" id="puzTitle">The First Domino</div>
         <div class="smc-sub" id="puzDesc">Follow the arrows! Find the starting trigger!</div>
         <button class="btn-tap primary smc-play" id="btnLaunchPuzzle">▶ SOLVE PUZZLE 1</button>
+      </div>
+    </div>
+    <div id="slingshotMapContainer" style="display:none">
+      <div class="campaign-progress" id="slingshotProgress">Progress: 0/30 ⭐ • 0/10 cleared</div>
+      <div class="arcade-tiles-grid" id="mSlingshotGrid"></div>
+      <!-- Selected Slingshot Mission Card -->
+      <div class="stage-mission-card slingshot-card-theme" id="slingshotMissionCard">
+        <div class="smc-top">
+          <span class="smc-badge" id="slingTag">SLING 1</span>
+          <span class="smc-time" id="slingArrows">🏹 2 Arrows</span>
+        </div>
+        <div class="smc-title" id="slingTitle">The Straight Pierce</div>
+        <div class="smc-sub" id="slingDesc">Aim straight through the row of 3 balloons!</div>
+        <button class="btn-tap primary smc-play" id="btnLaunchSlingshot">▶ SHOOT STAGE 1</button>
       </div>
     </div>
     <div class="mobile-actions" style="margin-top:10px"><button class="btn-tap" id="btnBackLevels">⬅️ Home</button></div>

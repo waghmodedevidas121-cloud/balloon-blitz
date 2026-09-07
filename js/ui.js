@@ -104,17 +104,25 @@ BB.UI = (function () {
   }
   function renderLevels() {
     var isCampaign = (currentMapTab === "campaign");
-    var tabC = $("tabCampaign"), tabP = $("tabPuzzles");
+    var isPuzzle = (currentMapTab === "puzzles");
+    var isSlingshot = (currentMapTab === "slingshot");
+
+    var tabC = $("tabCampaign"), tabP = $("tabPuzzles"), tabS = $("tabSlingshot");
     if (tabC) tabC.classList.toggle("active", isCampaign);
-    if (tabP) tabP.classList.toggle("active", !isCampaign);
-    var contC = $("campaignMapContainer"), contP = $("puzzleMapContainer");
+    if (tabP) tabP.classList.toggle("active", isPuzzle);
+    if (tabS) tabS.classList.toggle("active", isSlingshot);
+
+    var contC = $("campaignMapContainer"), contP = $("puzzleMapContainer"), contS = $("slingshotMapContainer");
     if (contC) contC.style.display = isCampaign ? "block" : "none";
-    if (contP) contP.style.display = isCampaign ? "none" : "block";
+    if (contP) contP.style.display = isPuzzle ? "block" : "none";
+    if (contS) contS.style.display = isSlingshot ? "block" : "none";
 
     if (isCampaign) {
       renderCampaignGrid();
-    } else {
+    } else if (isPuzzle) {
       renderPuzzleGrid();
+    } else {
+      renderSlingshotGrid();
     }
   }
   var selectedCampId = 1;
@@ -343,6 +351,101 @@ BB.UI = (function () {
       });
     }
   }
+
+  var selectedSlingId = 1;
+
+  function updateSlingMissionCard() {
+    var stg = (BB.Content.SLING_STAGES && BB.Content.SLING_STAGES[selectedSlingId - 1]) || { name: "Stage", arrows: 2, desc: "Aim and shoot" };
+    var tag = $("slingTag"), arrows = $("slingArrows"), title = $("slingTitle"), desc = $("slingDesc"), btn = $("btnLaunchSlingshot");
+    var u = BB.Save.data, sp = (u.slingshotProgress && u.slingshotProgress[selectedSlingId]) || { unlocked: selectedSlingId === 1 };
+
+    if (tag) tag.innerText = "STAGE " + (stg.id || selectedSlingId);
+    if (arrows) arrows.innerText = "🏹 " + stg.arrows + " Arrows";
+    if (title) title.innerText = stg.name;
+    if (desc) desc.innerText = stg.desc;
+    if (btn) {
+      if (!sp.unlocked) {
+        btn.innerText = "🔒 LOCKED (CLEAR STG " + (selectedSlingId - 1) + ")";
+        btn.classList.remove("primary");
+        btn.style.opacity = "0.55";
+      } else {
+        btn.innerText = "▶ SHOOT STAGE " + (stg.id || selectedSlingId);
+        btn.classList.add("primary");
+        btn.style.opacity = "1";
+      }
+    }
+  }
+
+  function renderSlingshotGrid() {
+    var g = $("mSlingshotGrid"); if (!g) return;
+    g.innerHTML = "";
+    var u = BB.Save.data, sp = u.slingshotProgress || {};
+    var stars = 0, cleared = 0;
+    (BB.Content.SLING_STAGES || []).forEach(function (stg) {
+      var p = sp[stg.id] || { unlocked: stg.id === 1, stars: 0 };
+      if (p.stars > 0) cleared++;
+      stars += (p.stars || 0);
+    });
+    $("slingshotProgress").innerText = "Progress: " + stars + "/30 ⭐ • " + cleared + "/10 cleared";
+
+    var highestUnlocked = 1;
+    (BB.Content.SLING_STAGES || []).forEach(function (stg) {
+      if (sp[stg.id] && sp[stg.id].unlocked) highestUnlocked = stg.id;
+    });
+    if (!sp[selectedSlingId] || !sp[selectedSlingId].unlocked) {
+      selectedSlingId = highestUnlocked;
+    }
+    updateSlingMissionCard();
+
+    (BB.Content.SLING_STAGES || []).forEach(function (stg) {
+      var p = sp[stg.id] || { unlocked: stg.id === 1, stars: 0 };
+      var isSel = (stg.id === selectedSlingId);
+      var c = document.createElement("div");
+      c.className = "arcade-tile" + (p.unlocked ? "" : " locked") + (isSel ? " selected" : "");
+
+      var starStr = p.stars > 0 ? "⭐".repeat(p.stars) : (p.unlocked ? "☆☆☆" : "");
+      c.innerHTML = '<div class="tile-num">' + (p.unlocked ? stg.id : "🔒") + "</div>" +
+        '<div class="tile-stars">' + starStr + "</div>";
+      c.dataset.sling = stg.id; c.dataset.locked = p.unlocked ? "0" : "1";
+      g.appendChild(c);
+    });
+
+    if (!g.dataset.bound) {
+      g.dataset.bound = "1";
+      g.addEventListener("click", function (e) {
+        var tile = e.target.closest(".arcade-tile");
+        if (!tile) return;
+        var id = parseInt(tile.dataset.sling, 10);
+        if (tile.dataset.locked === "1") {
+          BB.Audio.sound.init(); BB.Audio.sound.vibrate(40);
+          announce("🔒 LOCKED", "Clear Slingshot " + (id - 1) + " first!", "#ff5e7a");
+        } else {
+          BB.Audio.sound.init();
+          if (selectedSlingId === id) {
+            BB.Engine.startSlingshot(id);
+          } else {
+            selectedSlingId = id;
+            renderSlingshotGrid();
+          }
+        }
+      });
+    }
+
+    var playSlingBtn = $("btnLaunchSlingshot");
+    if (playSlingBtn && !playSlingBtn.dataset.bound) {
+      playSlingBtn.dataset.bound = "1";
+      playSlingBtn.addEventListener("click", function () {
+        var u = BB.Save.data, sp = (u.slingshotProgress && u.slingshotProgress[selectedSlingId]) || { unlocked: selectedSlingId === 1 };
+        if (!sp.unlocked) {
+          BB.Audio.sound.init(); BB.Audio.sound.vibrate(40);
+          announce("🔒 LOCKED", "Clear Slingshot " + (selectedSlingId - 1) + " first!", "#ff5e7a");
+          return;
+        }
+        BB.Audio.sound.init();
+        BB.Engine.startSlingshot(selectedSlingId);
+      });
+    }
+  }
   function renderProfile() {
     var u = BB.Save.data, r = BB.Player.rank(), stars = BB.Player.totalStars();
     $("mPlayerRank").innerText = "RANK: " + r.name + " • Lv" + (u.plevel || 1) + " (" + (u.xp || 0) + " XP)";
@@ -426,18 +529,21 @@ BB.UI = (function () {
   }
   function showLevelComplete(r) {
     var isPz = !!r.isPuzzle;
+    var isSling = !!r.isSlingshot;
     var tEl = $("mLevelCompleteTitle");
-    if (tEl) tEl.innerText = isPz ? "PUZZLE SOLVED! 🧠" : "LEVEL COMPLETE!";
+    if (tEl) tEl.innerText = isPz ? "PUZZLE SOLVED! 🧠" : (isSling ? "TRICKSHOT CLEAR! 🏹" : "LEVEL COMPLETE!");
     $("mLevelStars").innerText = "⭐".repeat(r.stars) + "☆".repeat(3 - r.stars);
-    $("mLevelSummary").innerText = isPz ? ("Cleared with " + r.time + "!") : "Objective cleared!";
+    $("mLevelSummary").innerText = (isPz || isSling) ? ("Cleared with " + r.time + "!") : "Objective cleared!";
     $("mLevelScoreVal").innerText = r.score;
     var lbl = $("mLevelTimeLbl");
-    if (lbl) lbl.innerText = isPz ? "Darts Left" : "Time Left";
-    $("mLevelTimeVal").innerText = isPz ? r.time : (r.time + "s");
+    if (lbl) lbl.innerText = (isPz || isSling) ? "Remaining" : "Time Left";
+    $("mLevelTimeVal").innerText = (isPz || isSling) ? r.time : (r.time + "s");
     $("mLevelRewardVal").innerText = "+" + r.coins + "🪙 +" + r.xp + "XP" + (r.levelUp ? " • LV UP!" : "");
-    var canNext = isPz ? (r.puzzleId < BB.Content.PUZZLES.length) : (currentLevelId < (BB.Content.MAX_LEVELS || 500));
+    var canNext = isPz ? (r.puzzleId < BB.Content.PUZZLES.length)
+      : (isSling ? (r.slingshotId < BB.Content.SLING_STAGES.length)
+      : (currentLevelId < (BB.Content.MAX_LEVELS || 500)));
     $("btnNextStage").style.display = canNext ? "flex" : "none";
-    announce(isPz ? "🧠 PUZZLE SOLVED!" : "🎉 STAGE CLEAR!", r.stars + " stars", isPz ? "#00f5d4" : "#33ff77");
+    announce(isPz ? "🧠 PUZZLE SOLVED!" : (isSling ? "🏹 STAGE CLEAR!" : "🎉 STAGE CLEAR!"), r.stars + " stars", isSling ? "#f97316" : (isPz ? "#00f5d4" : "#33ff77"));
     show("levelCompleteScreen");
   }
   function showGameOver(r) {
@@ -491,10 +597,11 @@ BB.UI = (function () {
     $("btnPlayBlitz").addEventListener("click", startBlitz);
     $("btnPlayInfinite").addEventListener("click", startInfinite);
     $("btnPlayLevels").addEventListener("click", function () { currentMapTab = "campaign"; renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
-    if ($("btnPlaySlingshot")) $("btnPlaySlingshot").addEventListener("click", function () { BB.Audio.sound.init(); BB.Engine.startSlingshot(); });
+    if ($("btnPlaySlingshot")) $("btnPlaySlingshot").addEventListener("click", function () { BB.Audio.sound.init(); currentMapTab = "slingshot"; renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
     if ($("btnPlayPuzzle")) $("btnPlayPuzzle").addEventListener("click", function () { BB.Audio.sound.init(); currentMapTab = "puzzles"; renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
     if ($("tabCampaign")) $("tabCampaign").addEventListener("click", function () { currentMapTab = "campaign"; renderLevels(); });
     if ($("tabPuzzles")) $("tabPuzzles").addEventListener("click", function () { currentMapTab = "puzzles"; renderLevels(); });
+    if ($("tabSlingshot")) $("tabSlingshot").addEventListener("click", function () { currentMapTab = "slingshot"; renderLevels(); });
     if ($("hudResetPuzzleBtn")) $("hudResetPuzzleBtn").addEventListener("click", function () { BB.Engine.resetPuzzle(); });
     $("btnOpenDashboard").addEventListener("click", function () { gameState = "HOME"; show("dashboardScreen"); });
     if ($("btnOpenDashboardHeader")) $("btnOpenDashboardHeader").addEventListener("click", function () { gameState = "HOME"; show("dashboardScreen"); });
@@ -545,6 +652,9 @@ BB.UI = (function () {
       if (st.mode === "PUZZLE") {
         if (st.puzzle < BB.Content.PUZZLES.length) BB.Engine.startPuzzle(st.puzzle + 1);
         else { gameState = "HOME"; currentMapTab = "puzzles"; renderLevels(); show("levelSelectScreen"); }
+      } else if (st.mode === "SLING") {
+        if (st.slingshot < BB.Content.SLING_STAGES.length) BB.Engine.startSlingshot(st.slingshot + 1);
+        else { gameState = "HOME"; currentMapTab = "slingshot"; renderLevels(); show("levelSelectScreen"); }
       } else {
         if (currentLevelId < (BB.Content.MAX_LEVELS || 500)) startLevel(currentLevelId + 1);
         else { gameState = "HOME"; show("homeScreen"); }
@@ -553,6 +663,7 @@ BB.UI = (function () {
     $("btnReplayLevel").addEventListener("click", function () {
       var st = BB.Engine.state();
       if (st.mode === "PUZZLE") BB.Engine.startPuzzle(st.puzzle);
+      else if (st.mode === "SLING") BB.Engine.startSlingshot(st.slingshot);
       else startLevel(currentLevelId);
     });
     $("btnRetry").addEventListener("click", function () {
@@ -560,7 +671,7 @@ BB.UI = (function () {
       if (st.mode === "BLITZ") startBlitz();
       else if (st.mode === "INFINITE") startInfinite();
       else if (st.mode === "PUZZLE") BB.Engine.startPuzzle(st.puzzle);
-      else if (st.mode === "SLING") BB.Engine.startSlingshot();
+      else if (st.mode === "SLING") BB.Engine.startSlingshot(st.slingshot);
       else startLevel(currentLevelId);
     });
     $("btnAdCoins").addEventListener("click", function () {

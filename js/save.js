@@ -8,6 +8,7 @@ BB.Save = (function () {
       version: 1, totalPops: 0, blitzHighScore: 0, infiniteHighScore: 0, slingshotHighScore: 0,
       maxWave: 0, maxCombo: 0, levelsProgress: { 1: { unlocked: true, stars: 0 } },
       puzzleProgress: { 1: { unlocked: true, stars: 0 } },
+      slingshotProgress: { 1: { unlocked: true, stars: 0 } },
       achievements: {}, settings: { sound: true, vibration: true, effects: true, music: true },
       gamesPlayed: 0, bombsPopped: 0, fevers: 0,
       xp: 0, plevel: 1, coins: 0, gems: 0,
@@ -46,6 +47,9 @@ BB.Save = (function () {
         data.rewards = Object.assign(defaults().rewards, p.rewards || {});
         if (!data.puzzleProgress || !data.puzzleProgress[1]) {
           data.puzzleProgress = Object.assign({ 1: { unlocked: true, stars: 0 } }, data.puzzleProgress || {});
+        }
+        if (!data.slingshotProgress || !data.slingshotProgress[1]) {
+          data.slingshotProgress = Object.assign({ 1: { unlocked: true, stars: 0 } }, data.slingshotProgress || {});
         }
       } else if (migrateOld()) {
         save(); // persist migrated copy under new key; old key left intact as backup

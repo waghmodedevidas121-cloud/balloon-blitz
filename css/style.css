@@ -973,6 +973,12 @@ body.combo-active #hudComboPill {
   box-shadow: 0 3px 10px rgba(139, 92, 246, 0.4);
 }
 
+.map-tab#tabSlingshot.active {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.4);
+}
+
 /* ================= 500-LEVEL WORLD SELECTOR BAR ================= */
 .world-nav-bar {
   display: flex;
@@ -1139,6 +1145,11 @@ body.combo-active #hudComboPill {
 .stage-mission-card.puzzle-card-theme {
   border-color: rgba(16, 185, 129, 0.5);
   border-bottom-color: #044734;
+}
+
+.stage-mission-card.slingshot-card-theme {
+  border-color: rgba(249, 115, 22, 0.5);
+  border-bottom-color: #7c2d12;
 }
 
 .smc-top {

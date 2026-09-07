@@ -13,6 +13,7 @@ var balloons = [], particles = [], textPopups = [], shockwaves = [], lasers = []
 var currentWeapon = "pistol", weaponTimer = 0, weaponShownSec = -1;
 var bossBalloon = null, bossHp = 0, maxBossHp = 0;
 var slingshotDarts = [], slingshotArrowsLeft = 5, slingshotTotalPops = 0, slingshotState = { dragging: false, curX: 0, curY: 0 };
+var currentSlingshotStage = 1, slingshotTotalBalloons = 0, slingshotActiveBalloons = 0;
 function sound() { return BB.Audio.sound; }
 function effectsOn() { return BB.Save.data.settings.effects !== false; }
 
@@ -408,8 +409,8 @@ class MobileBalloon {
       ctx.restore();
     }
 
-    // Draw directional arrow in Tactical Puzzle Mode!
-    if (this.isPuzzle && this.dir) {
+    // Draw directional arrow strictly in Tactical Puzzle Mode!
+    if (this.isPuzzle && !this.isSling && this.dir) {
       this.drawArrow(x, y, r);
     }
 
@@ -780,6 +781,11 @@ class SlingshotProjectile {
           sound().victory();
         }
         updateHud();
+        var rem = balloons.filter(function (o) { return !o.popped; }).length;
+        slingshotActiveBalloons = rem;
+        if (rem === 0) {
+          setTimeout(winSlingshotStage, 380);
+        }
       }
     }
   }
@@ -1143,18 +1149,31 @@ function startBlitz() {
   initBalloons(); updateHud(); BB.UI.show(null);
   BB.UI.announce("⚡ BLITZ!", "60 seconds — go!", "#ffd23f");
 }
-function startSlingshot() {
+function initSlingshotStage(id) {
+  balloons.length = 0;
+  slingshotDarts.length = 0;
+  var stg = (BB.Content.SLING_STAGES && BB.Content.SLING_STAGES[id - 1]) || BB.Content.SLING_STAGES[0];
+  slingshotArrowsLeft = stg.arrows;
+  stg.balloons.forEach(function (b) {
+    var nb = new MobileBalloon(null, true, b.key, b.x, b.y);
+    nb.isSling = true;
+    balloons.push(nb);
+  });
+  slingshotTotalBalloons = balloons.length;
+  slingshotActiveBalloons = balloons.length;
+}
+function startSlingshot(stageId) {
   sound().init();
   try { BB.Music.play("blitz"); } catch (e) {}
   BB.Ads.notifyRunStart(); lockInput();
+  currentSlingshotStage = stageId || 1;
   gameMode = "SLING"; gameState = "PLAYING"; resetRun();
-  slingshotArrowsLeft = 5;
-  slingshotTotalPops = 0;
-  slingshotDarts.length = 0;
+  initSlingshotStage(currentSlingshotStage);
   slingshotState.dragging = false;
   BB.Save.data.gamesPlayed = (BB.Save.data.gamesPlayed || 0) + 1; BB.Save.save();
-  initBalloons(); updateHud(); BB.UI.show(null);
-  BB.UI.announce("🏹 SLINGSHOT SHOOTER", "Pull back & release to fire!", "#f97316");
+  updateHud(); BB.UI.show(null);
+  var stg = BB.Content.SLING_STAGES[currentSlingshotStage - 1];
+  BB.UI.announce("🏹 STAGE " + currentSlingshotStage + ": " + stg.name.toUpperCase(), stg.desc, "#f97316");
 }
 function startInfinite() {
   sound().init(); BB.Music.playMode("survival");
@@ -1450,6 +1469,53 @@ function failPuzzle() {
     unpopped: unpopped
   });
 }
+function winSlingshotStage() {
+  if (gameState !== "PLAYING" || gameMode !== "SLING") return;
+  gameState = "LEVEL_COMPLETE";
+  sound().victory(); endFever();
+  var stg = BB.Content.SLING_STAGES[currentSlingshotStage - 1] || BB.Content.SLING_STAGES[0];
+  var stars = slingshotArrowsLeft >= 1 ? 3 : 2;
+  var sp = BB.Save.data.slingshotProgress;
+  if (!sp) sp = BB.Save.data.slingshotProgress = { 1: { unlocked: true, stars: 0 } };
+  if (!sp[currentSlingshotStage]) sp[currentSlingshotStage] = { unlocked: true, stars: 0 };
+  sp[currentSlingshotStage].stars = Math.max(sp[currentSlingshotStage].stars, stars);
+  if (currentSlingshotStage < BB.Content.SLING_STAGES.length) {
+    if (!sp[currentSlingshotStage + 1]) sp[currentSlingshotStage + 1] = { unlocked: true, stars: 0 };
+    else sp[currentSlingshotStage + 1].unlocked = true;
+  }
+  var bonus = 80 + stars * 30;
+  BB.Economy.addCoins(bonus);
+  BB.Economy.addGems(stars >= 3 ? 1 : 0);
+  var rec = BB.Player.recordGame("SLING", { score: score || (1000 * stars), pops: slingshotTotalBalloons, combo: maxCombo, wave: 0 });
+  BB.Save.save(); BB.Achievements.check();
+  BB.UI.showLevelComplete({
+    stars: stars,
+    score: score || (1000 * stars),
+    time: slingshotArrowsLeft + " Left",
+    coins: bonus + rec.coins,
+    xp: rec.xp,
+    levelUp: rec.levelUp,
+    isSlingshot: true,
+    slingshotId: currentSlingshotStage
+  });
+}
+function failSlingshotStage() {
+  if (gameState !== "PLAYING" || gameMode !== "SLING") return;
+  gameState = "GAMEOVER";
+  sound().lifeLost(); endFever();
+  var unpopped = balloons.filter(function (o) { return !o.popped; }).length;
+  BB.UI.showGameOver({
+    isSlingshot: true,
+    slingshotId: currentSlingshotStage,
+    score: score,
+    pops: slingshotTotalBalloons - unpopped,
+    combo: maxCombo,
+    wave: 0,
+    coins: (slingshotTotalBalloons - unpopped) * 2,
+    xp: (slingshotTotalBalloons - unpopped) * 3,
+    unpopped: unpopped
+  });
+}
 function checkLevelWin() {
   var cur = BB.Content.LEVELS[currentLevelId - 1];
   if (levelProgressCount >= cur.target) {
@@ -1495,7 +1561,7 @@ function updateHud() {
     document.body.classList.remove("combo-active");
   }
   var resetBtn = document.getElementById("hudResetPuzzleBtn");
-  if (resetBtn) resetBtn.style.display = (gameMode === "PUZZLE") ? "flex" : "none";
+  if (resetBtn) resetBtn.style.display = (gameMode === "PUZZLE" || gameMode === "SLING") ? "flex" : "none";
 
   if (gameMode === "BLITZ") {
     document.getElementById("hudModeVal").innerText = "BLITZ";
@@ -1531,13 +1597,14 @@ function updateHud() {
       banner.innerText = "🧩 PUZZLE " + currentPuzzleId + ": " + pz.name + " (" + puzzleActiveBalloons + " left)";
     }
   } else if (gameMode === "SLING") {
-    document.getElementById("hudModeVal").innerText = "SLING";
+    var stg = (BB.Content.SLING_STAGES && BB.Content.SLING_STAGES[currentSlingshotStage - 1]) || { name: "Slingshot", arrows: 2 };
+    document.getElementById("hudModeVal").innerText = "SLING " + currentSlingshotStage;
     document.getElementById("mTargetLbl").innerText = "ARROWS";
     document.getElementById("mTargetVal").innerText = "🏹 " + slingshotArrowsLeft;
     var banner = document.getElementById("mobileObjBanner");
     if (banner) {
       banner.style.display = "block";
-      banner.innerText = "🏹 SLINGSHOT: Pull & shoot! (" + slingshotArrowsLeft + " arrows left)";
+      banner.innerText = "🏹 STAGE " + currentSlingshotStage + ": " + stg.name + " (" + slingshotActiveBalloons + " left)";
     }
   }
   updateWeaponBadge();
@@ -1547,6 +1614,10 @@ function handleTouchAt(x, y) {
   fireAt(x, y);
 }
 function fireAt(px, py) {
+  if (gameMode === "SLING") {
+    // Direct tap disabled in Slingshot mode! Arrows must be aimed and shot from the slingshot!
+    return;
+  }
   if (gameMode === "PUZZLE") {
     if (puzzleDartsLeft <= 0) return;
     spawnRipple(px, py, "");
@@ -1811,9 +1882,13 @@ BB.Engine = {
   },
   dims: function () { return { w: width, h: height }; },
   state: function () {
-    return { mode: gameMode, state: gameState, score: score, combo: combo, lives: lives, wave: wave, level: currentLevelId, puzzle: currentPuzzleId };
+    return { mode: gameMode, state: gameState, score: score, combo: combo, lives: lives, wave: wave, level: currentLevelId, puzzle: currentPuzzleId, slingshot: currentSlingshotStage };
   },
   startPuzzle: startPuzzle,
   startSlingshot: startSlingshot,
-  resetPuzzle: function () { if (gameMode === "PUZZLE") startPuzzle(currentPuzzleId); }
+  resetSlingshot: function () { if (gameMode === "SLING") startSlingshot(currentSlingshotStage); },
+  resetPuzzle: function () {
+    if (gameMode === "PUZZLE") startPuzzle(currentPuzzleId);
+    else if (gameMode === "SLING") startSlingshot(currentSlingshotStage);
+  }
 };

@@ -14,8 +14,13 @@ BB.Player = (function () {
     for (var k in pp) s += (pp[k].stars || 0);
     return s;
   }
+  function totalSlingshotStars() {
+    var s = 0, sp = d().slingshotProgress || {};
+    for (var k in sp) s += (sp[k].stars || 0);
+    return s;
+  }
   function totalStars() {
-    return totalCampaignStars() + totalPuzzleStars();
+    return totalCampaignStars() + totalPuzzleStars() + totalSlingshotStars();
   }
   function rank() {
     var pops = d().totalPops || 0, stars = totalStars(), idx = 0;
@@ -51,5 +56,5 @@ BB.Player = (function () {
     var lv = addXP(xp);
     return { xp: xp, coins: coins, levelUp: lv.up, level: lv.level };
   }
-  return { RANKS: RANKS, totalStars: totalStars, totalCampaignStars: totalCampaignStars, totalPuzzleStars: totalPuzzleStars, rank: rank, addXP: addXP, recordGame: recordGame };
+  return { RANKS: RANKS, totalStars: totalStars, totalCampaignStars: totalCampaignStars, totalPuzzleStars: totalPuzzleStars, totalSlingshotStars: totalSlingshotStars, rank: rank, addXP: addXP, recordGame: recordGame };
 })();

@@ -256,6 +256,147 @@ window.BB = window.BB || {};
       ]
     }
   ],
+  SLING_STAGES: [
+    {
+      id: 1,
+      name: "The Straight Pierce",
+      desc: "2 Arrows: Aim straight through the row of 3 balloons!",
+      arrows: 2,
+      balloons: [
+        { key: "RED", x: 0.50, y: 0.24 },
+        { key: "RED", x: 0.50, y: 0.38 },
+        { key: "RED", x: 0.50, y: 0.52 }
+      ]
+    },
+    {
+      id: 2,
+      name: "TNT Barrel Blast",
+      desc: "2 Arrows: Hit the center TNT Bomb to clear the ring!",
+      arrows: 2,
+      balloons: [
+        { key: "BOMB",  x: 0.50, y: 0.38 },
+        { key: "BLUE",  x: 0.34, y: 0.30 },
+        { key: "BLUE",  x: 0.66, y: 0.30 },
+        { key: "PINK",  x: 0.28, y: 0.46 },
+        { key: "PINK",  x: 0.72, y: 0.46 },
+        { key: "GREEN", x: 0.50, y: 0.54 }
+      ]
+    },
+    {
+      id: 3,
+      name: "Wall Bounce Bank",
+      desc: "2 Arrows: Bank off the left or right wall for a trickshot!",
+      arrows: 2,
+      balloons: [
+        { key: "GOLD",  x: 0.18, y: 0.26 },
+        { key: "GOLD",  x: 0.82, y: 0.26 },
+        { key: "RED",   x: 0.18, y: 0.42 },
+        { key: "RED",   x: 0.82, y: 0.42 }
+      ]
+    },
+    {
+      id: 4,
+      name: "The Arc Bridge",
+      desc: "2 Arrows: Match the gravity curve to pierce all 5!",
+      arrows: 2,
+      balloons: [
+        { key: "BLUE",  x: 0.24, y: 0.44 },
+        { key: "BLUE",  x: 0.37, y: 0.32 },
+        { key: "GOLD",  x: 0.50, y: 0.26 },
+        { key: "BLUE",  x: 0.63, y: 0.32 },
+        { key: "BLUE",  x: 0.76, y: 0.44 }
+      ]
+    },
+    {
+      id: 5,
+      name: "Pyramid Stack",
+      desc: "2 Arrows: Hit the TNT foundation to topple the pyramid!",
+      arrows: 2,
+      balloons: [
+        { key: "BOMB",  x: 0.50, y: 0.54 },
+        { key: "GREEN", x: 0.36, y: 0.42 },
+        { key: "GREEN", x: 0.64, y: 0.42 },
+        { key: "PINK",  x: 0.43, y: 0.30 },
+        { key: "PINK",  x: 0.57, y: 0.30 },
+        { key: "GOLD",  x: 0.50, y: 0.18 }
+      ]
+    },
+    {
+      id: 6,
+      name: "Twin Pillars",
+      desc: "2 Arrows: 1 piercing arrow down each pillar!",
+      arrows: 2,
+      balloons: [
+        { key: "RED",  x: 0.30, y: 0.24 },
+        { key: "RED",  x: 0.30, y: 0.38 },
+        { key: "RED",  x: 0.30, y: 0.52 },
+        { key: "BLUE", x: 0.70, y: 0.24 },
+        { key: "BLUE", x: 0.70, y: 0.38 },
+        { key: "BLUE", x: 0.70, y: 0.52 }
+      ]
+    },
+    {
+      id: 7,
+      name: "The Cross Target",
+      desc: "2 Arrows: Split shot into the central Bomb!",
+      arrows: 2,
+      balloons: [
+        { key: "BOMB",   x: 0.50, y: 0.40 },
+        { key: "FREEZE", x: 0.50, y: 0.22 },
+        { key: "FREEZE", x: 0.50, y: 0.58 },
+        { key: "PINK",   x: 0.24, y: 0.40 },
+        { key: "PINK",   x: 0.76, y: 0.40 }
+      ]
+    },
+    {
+      id: 8,
+      name: "Sub-Zero Corridor",
+      desc: "2 Arrows: Shatter with Freeze to unleash the double chain!",
+      arrows: 2,
+      balloons: [
+        { key: "FREEZE", x: 0.50, y: 0.32 },
+        { key: "BOMB",   x: 0.32, y: 0.48 },
+        { key: "BOMB",   x: 0.68, y: 0.48 },
+        { key: "GOLD",   x: 0.50, y: 0.18 },
+        { key: "GREEN",  x: 0.20, y: 0.32 },
+        { key: "GREEN",  x: 0.80, y: 0.32 }
+      ]
+    },
+    {
+      id: 9,
+      name: "Double TNT Vault",
+      desc: "2 Arrows: Trigger both explosive vaults!",
+      arrows: 2,
+      balloons: [
+        { key: "BOMB", x: 0.35, y: 0.36 },
+        { key: "BOMB", x: 0.65, y: 0.36 },
+        { key: "RED",  x: 0.20, y: 0.24 },
+        { key: "RED",  x: 0.50, y: 0.24 },
+        { key: "RED",  x: 0.80, y: 0.24 },
+        { key: "BLUE", x: 0.35, y: 0.52 },
+        { key: "BLUE", x: 0.65, y: 0.52 }
+      ]
+    },
+    {
+      id: 10,
+      name: "Carnival Master",
+      desc: "3 Arrows: 11 targets! The grand trickshot finale!",
+      arrows: 3,
+      balloons: [
+        { key: "BOMB",  x: 0.50, y: 0.38 },
+        { key: "GOLD",  x: 0.35, y: 0.24 },
+        { key: "GOLD",  x: 0.65, y: 0.24 },
+        { key: "RED",   x: 0.20, y: 0.38 },
+        { key: "RED",   x: 0.80, y: 0.38 },
+        { key: "BLUE",  x: 0.35, y: 0.52 },
+        { key: "BLUE",  x: 0.65, y: 0.52 },
+        { key: "PINK",  x: 0.50, y: 0.20 },
+        { key: "PINK",  x: 0.50, y: 0.56 },
+        { key: "GREEN", x: 0.20, y: 0.56 },
+        { key: "GREEN", x: 0.80, y: 0.56 }
+      ]
+    }
+  ],
   SPECS: {
     RED:    { key: "RED",    color: "#ff3823", points: 10,  speed: 2.2, r: 36, prob: 0.22 },
     PINK:   { key: "PINK",   color: "#ff4da6", points: 15,  speed: 2.3, r: 36, prob: 0.20 },
