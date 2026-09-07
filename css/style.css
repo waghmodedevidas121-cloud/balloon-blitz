@@ -982,6 +982,85 @@ body.combo-active #hudComboPill {
   box-shadow: 0 3px 10px rgba(139, 92, 246, 0.4);
 }
 
+/* ================= 500-LEVEL WORLD SELECTOR BAR ================= */
+.world-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(32, 44, 96, 0.92) 0%, rgba(18, 24, 60, 0.95) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 3px solid rgba(10, 14, 38, 0.9);
+  border-radius: 16px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.world-nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+  border: none;
+  border-bottom: 2.5px solid #1e3a8a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: transform 0.08s ease;
+}
+
+.world-nav-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+
+.world-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: #334155;
+  border-bottom-color: #1e293b;
+}
+
+.world-nav-info {
+  flex: 1;
+  text-align: center;
+}
+
+.world-nav-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.world-nav-sub {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.arcade-tile.boss-tile {
+  background: linear-gradient(180deg, #7c2d12 0%, #431407 100%);
+  border-color: #f97316;
+}
+
+.arcade-tile.boss-tile .tile-num {
+  color: #fbbf24;
+}
+
+.boss-crown {
+  position: absolute;
+  top: -5px;
+  right: -3px;
+  font-size: 10px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+}
+
 .campaign-progress {
   font-size: 12px;
   font-weight: 800;

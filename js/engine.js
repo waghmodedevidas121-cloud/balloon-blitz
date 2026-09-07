@@ -11,6 +11,7 @@ var shakeIntensity = 0, shakeDuration = 0, runCoins = 0;
 var mousePos = { x: 0, y: 0 };
 var balloons = [], particles = [], textPopups = [], shockwaves = [], lasers = [], powerupDrops = [], needleRays = [];
 var currentWeapon = "pistol", weaponTimer = 0, weaponShownSec = -1;
+var bossBalloon = null, bossHp = 0, maxBossHp = 0;
 function sound() { return BB.Audio.sound; }
 function effectsOn() { return BB.Save.data.settings.effects !== false; }
 
@@ -306,8 +307,21 @@ class MobileBalloon {
     this.drawX = this.x;
     this.y = (y !== null && y !== undefined) ? y : (height + this.radius + 20 + Math.random() * 80);
     var bonus = (gameMode === "INFINITE") ? (wave - 1) * 0.35 : 0;
-    this.speed = sel.speed + Math.random() * 0.6 + bonus;
+    var curLvl = (gameMode === "LEVELS") ? BB.Content.LEVELS[currentLevelId - 1] : null;
+    var spdMult = (curLvl && curLvl.speedMult) || 1.0;
+    this.speed = (sel.speed + Math.random() * 0.6 + bonus) * spdMult;
     this.wobble = Math.random() * 100; this.popped = false; this.spawnScale = 0;
+
+    // Progressive mechanics: Shields and Hazards in higher campaign levels!
+    this.shield = 0;
+    this.isHazard = false;
+    if (curLvl && !sel.isBomb && !sel.isGift && !sel.isFreeze) {
+      if (curLvl.hasShields && Math.random() < 0.22) {
+        this.shield = 1;
+      } else if (curLvl.hasHazards && Math.random() < 0.12) {
+        this.isHazard = true;
+      }
+    }
   }
   update(dt, scale) {
     if (this.isPuzzle) {
@@ -350,6 +364,48 @@ class MobileBalloon {
     // Draw full cartoon balloon sprite (100% matched to Image 1!)
     drawSprite(x, y, this.radius, this.spawnScale, this.spec.key, base,
       this.spec.isBomb ? "bomb" : this.spec.isGift ? "gift" : this.spec.isGold ? "gold" : this.spec.isFreeze ? "freeze" : "normal");
+
+    // If Hazard (Spike Balloon): Draw spiky outline and hazard glow
+    if (this.isHazard) {
+      ctx.save();
+      ctx.strokeStyle = "#ff2a5f";
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = "#ff2a5f";
+      ctx.shadowBlur = 10;
+      var spikes = 8;
+      for (var si = 0; si < spikes; si++) {
+        var sa = (si / spikes) * Math.PI * 2;
+        var sx1 = x + Math.cos(sa) * (r * 0.95);
+        var sy1 = y + Math.sin(sa) * (r * 0.95);
+        var sx2 = x + Math.cos(sa) * (r * 1.35);
+        var sy2 = y + Math.sin(sa) * (r * 1.35);
+        ctx.beginPath(); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // If Shielded: Draw rotating glowing cyan energy bubble
+    if (this.shield > 0) {
+      ctx.save();
+      ctx.strokeStyle = "#00f5d4";
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = "#00f5d4";
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 1.28, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      var arcRot = this.wobble * 2;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 1.28, arcRot, arcRot + Math.PI * 0.4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y, r * 1.28, arcRot + Math.PI, arcRot + Math.PI * 1.4);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // Draw directional arrow in Tactical Puzzle Mode!
     if (this.isPuzzle && this.dir) {
@@ -467,6 +523,93 @@ class MobileBalloon {
   containsPoint(px, py) {
     var hr = this.radius * 1.4 + 15, dx = px - this.drawX, dy = py - this.y;
     return (dx * dx + dy * dy) <= (hr * hr);
+  }
+}
+
+class BossBalloon {
+  constructor(hp) {
+    this.radius = 54;
+    this.x = width / 2;
+    this.y = height * 0.38;
+    this.vx = 75;
+    this.vy = 40;
+    this.hp = hp;
+    this.maxHp = hp;
+    this.wobble = 0;
+    this.popped = false;
+  }
+  update(dt) {
+    this.wobble += dt * 3;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    var pad = this.radius + 20;
+    if (this.x < pad) { this.x = pad; this.vx = Math.abs(this.vx); }
+    if (this.x > width - pad) { this.x = width - pad; this.vx = -Math.abs(this.vx); }
+    if (this.y < height * 0.16 + pad) { this.y = height * 0.16 + pad; this.vy = Math.abs(this.vy); }
+    if (this.y > height * 0.65) { this.y = height * 0.65; this.vy = -Math.abs(this.vy); }
+  }
+  draw() {
+    var x = this.x, y = this.y + Math.sin(this.wobble) * 8;
+    var r = this.radius;
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.55)";
+    ctx.shadowBlur = 16;
+
+    // Boss Royal Purple & Crimson gradient
+    var bg = ctx.createRadialGradient(x - r * 0.3, y - r * 0.4, r * 0.1, x, y, r * 1.2);
+    bg.addColorStop(0, "#ff4d6d");
+    bg.addColorStop(0.5, "#9333ea");
+    bg.addColorStop(1, "#3b0764");
+    ctx.fillStyle = bg;
+    ctx.strokeStyle = "#ffd000";
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 3D Crescent Shine
+    ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.35, y - r * 0.35, r * 0.24, r * 0.12, -Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Menacing cartoon boss eyes
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(x - r * 0.28, y - r * 0.08, r * 0.18, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + r * 0.28, y - r * 0.08, r * 0.18, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#1e1b4b";
+    ctx.beginPath(); ctx.arc(x - r * 0.24, y - r * 0.08, r * 0.09, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + r * 0.32, y - r * 0.08, r * 0.09, 0, Math.PI * 2); ctx.fill();
+
+    // Boss Crown 👑
+    ctx.font = "34px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("👑", x, y - r * 1.05);
+
+    // Floating Boss Health Bar
+    var barW = 110, barH = 10;
+    var pct = Math.max(0, this.hp / this.maxHp);
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(x - barW / 2 - 2, y + r * 1.15 - 2, barW + 4, barH + 4);
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(x - barW / 2, y + r * 1.15, barW, barH);
+    ctx.fillStyle = "#10b981";
+    ctx.fillRect(x - barW / 2, y + r * 1.15, barW * pct, barH);
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - barW / 2, y + r * 1.15, barW, barH);
+
+    ctx.font = "900 10px -apple-system, sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(this.hp + " / " + this.maxHp + " HP", x, y + r * 1.15 + barH / 2 + 1);
+
+    ctx.restore();
+  }
+  containsPoint(px, py) {
+    var dx = px - this.x, dy = py - this.y;
+    return (dx * dx + dy * dy) <= ((this.radius + 15) * (this.radius + 15));
   }
 }
 
@@ -690,6 +833,7 @@ function resetRun() {
   score = 0; combo = 1; maxCombo = 1; comboTimer = 0; balloonsPopped = 0;
   feverCharge = 0; isFever = false; feverTimer = 0; slowMoTimer = 0;
   feversThisRun = 0; runCoins = 0; lifeGrace = 0;
+  bossBalloon = null; bossHp = 0; maxBossHp = 0;
   currentWeapon = "pistol"; weaponTimer = 0; weaponShownSec = -1;
   powerupDrops.length = 0; lasers.length = 0; shakeDuration = 0; needleRays.length = 0;
   document.body.classList.remove("fever-active");
@@ -715,12 +859,17 @@ function startInfinite() {
 function startLevel(id) {
   sound().init(); BB.Music.playMode("LEVELS");
   BB.Ads.notifyRunStart(); lockInput(); currentLevelId = id;
-  var l = BB.Content.LEVELS[id - 1];
+  var l = BB.Content.LEVELS[id - 1] || BB.Content.LEVELS[0];
   gameMode = "LEVELS"; gameState = "PLAYING"; resetRun();
   timeLeft = l.time; levelProgressCount = 0;
+  if (l.isBoss) {
+    bossHp = l.target;
+    maxBossHp = l.target;
+    bossBalloon = new BossBalloon(bossHp);
+  }
   BB.Save.data.gamesPlayed = (BB.Save.data.gamesPlayed || 0) + 1; BB.Save.save();
   initBalloons(); updateHud(); BB.UI.show(null);
-  BB.UI.announce("STAGE " + id, l.desc.toUpperCase(), "#00f5d4");
+  BB.UI.announce(l.isBoss ? "👑 BOSS STAGE " + id : "STAGE " + id, l.desc.toUpperCase(), l.isBoss ? "#ffd000" : "#00f5d4");
 }
 function initPuzzle(id) {
   balloons.length = 0;
@@ -1001,7 +1150,7 @@ function checkLevelWin() {
     var lp = BB.Save.data.levelsProgress;
     if (!lp[currentLevelId]) lp[currentLevelId] = { unlocked: true, stars: 0 };
     lp[currentLevelId].stars = Math.max(lp[currentLevelId].stars, stars);
-    if (currentLevelId < 10) {
+    if (currentLevelId < (BB.Content.MAX_LEVELS || 500)) {
       if (!lp[currentLevelId + 1]) lp[currentLevelId + 1] = { unlocked: true, stars: 0 };
       else lp[currentLevelId + 1].unlocked = true;
     }
@@ -1051,10 +1200,18 @@ function updateHud() {
     document.getElementById("mTargetVal").innerText = h || "💀";
   } else if (gameMode === "LEVELS") {
     var l = BB.Content.LEVELS[currentLevelId - 1];
-    document.getElementById("hudModeVal").innerText = "STG " + currentLevelId;
+    document.getElementById("hudModeVal").innerText = (l && l.isBoss ? "👑 BOSS " : "STG ") + currentLevelId;
     document.getElementById("mTargetLbl").innerText = "TIME";
     document.getElementById("mTargetVal").innerText = Math.ceil(timeLeft);
-    document.getElementById("mobileObjBanner").innerText = "LVL " + currentLevelId + ": " + l.desc + " (" + levelProgressCount + "/" + l.target + ")";
+    var banner = document.getElementById("mobileObjBanner");
+    if (banner && l) {
+      banner.style.display = "block";
+      if (l.isBoss) {
+        banner.innerText = "👑 BOSS BATTLE: " + (bossHp || 0) + "/" + (maxBossHp || 0) + " HP (" + Math.ceil(timeLeft) + "s)";
+      } else {
+        banner.innerText = "LVL " + currentLevelId + ": " + l.desc + " (" + levelProgressCount + "/" + l.target + ")";
+      }
+    }
   } else if (gameMode === "PUZZLE") {
     var pz = (BB.Content.PUZZLES && BB.Content.PUZZLES[currentPuzzleId - 1]) || { name: "Puzzle", darts: 1 };
     document.getElementById("hudModeVal").innerText = "PUZZLE " + currentPuzzleId;
@@ -1088,6 +1245,27 @@ function fireAt(px, py) {
     }
     return;
   }
+
+  // 1. Check King Blimp Boss tap!
+  if (bossBalloon && !bossBalloon.popped && bossBalloon.containsPoint(px, py)) {
+    bossBalloon.hp--;
+    bossHp = bossBalloon.hp;
+    triggerShake(7, 0.16);
+    sound().laser();
+    burst(px, py, "#ffd000", 14);
+    textPopups.push(new MobileTextPopup("-1 HP! 👑", px, py - 20, "#ff4444"));
+    levelProgressCount++;
+    if (bossBalloon.hp <= 0) {
+      bossBalloon.popped = true;
+      burst(bossBalloon.x, bossBalloon.y, "#ffd700", 45, true);
+      shockwaves.push(new MobileShockwave(bossBalloon.x, bossBalloon.y, 250, "#ffd700"));
+      sound().victory();
+      setTimeout(checkLevelWin, 350);
+    }
+    updateHud();
+    return;
+  }
+
   for (var i = powerupDrops.length - 1; i >= 0; i--) {
     var dp = powerupDrops[i];
     if (dp.containsPoint(px, py)) { powerupDrops.splice(i, 1); collectDrop(dp); return; }
@@ -1115,7 +1293,37 @@ function fireAt(px, py) {
   var hit = false, best = null;
   for (i = balloons.length - 1; i >= 0; i--) {
     b = balloons[i];
-    if (!b.popped && b.containsPoint(px, py)) { popBalloon(b); hit = true; best = b; break; }
+    if (!b.popped && b.containsPoint(px, py)) {
+      // Hazard spike balloon hit!
+      if (b.isHazard) {
+        score = Math.max(0, score - 200);
+        combo = 1;
+        triggerShake(12, 0.35); BB.UI.flash(0.2);
+        sound().bomb();
+        burst(px, py, "#ff2a5f", 20, true);
+        textPopups.push(new MobileTextPopup("OUCH! 🦔 -200", px, py - 20, "#ff2a5f", true));
+        b.popped = true;
+        setTimeout(function () { b.reset(null); }, 400);
+        updateHud();
+        return;
+      }
+      // Shielded balloon hit!
+      if (b.shield > 0) {
+        b.shield = 0;
+        sound().laser();
+        triggerShake(6, 0.15);
+        burst(b.drawX, b.y, "#00f5d4", 16);
+        textPopups.push(new MobileTextPopup("SHIELD BROKEN! 🛡️", b.drawX, b.y - 20, "#00f5d4"));
+        var curLvl = BB.Content.LEVELS[currentLevelId - 1];
+        if (curLvl && curLvl.type === "shield") {
+          levelProgressCount++;
+          checkLevelWin();
+        }
+        updateHud();
+        return;
+      }
+      popBalloon(b); hit = true; best = b; break;
+    }
   }
   if (currentWeapon === "gatling" && hit) {
     var extra = 0;
@@ -1149,6 +1357,10 @@ function loop(curT) {
   var frozen = (gameState === "PAUSED");
   if (slowMoTimer > 0) { ctx.fillStyle = "rgba(0,245,212,.05)"; ctx.fillRect(0, 0, width, height); ctx.fillStyle = "rgba(0,245,212,.03)"; ctx.fillRect(0, height * 0.22, width, height * 0.78); }
   if (isFever) { var h = (curT * 0.15) % 360; ctx.fillStyle = "hsla(" + h + ",70%,55%,.04)"; ctx.fillRect(0, 0, width, height); }
+  if (bossBalloon && !bossBalloon.popped) {
+    if (!frozen) bossBalloon.update(dt);
+    bossBalloon.draw();
+  }
   for (var i = 0; i < balloons.length; i++) { var b = balloons[i]; if (!frozen) b.update(dt, scale); if (!b.popped) b.draw(); }
   for (var d = powerupDrops.length - 1; d >= 0; d--) {
     var dr = powerupDrops[d]; if (!frozen) dr.update(dt); dr.draw();

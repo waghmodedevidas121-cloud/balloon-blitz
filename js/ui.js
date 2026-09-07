@@ -66,7 +66,7 @@ BB.UI = (function () {
     $("homeStars").innerText = stars + "⭐";
     $("homeCombo").innerText = "x" + (u.maxCombo || 1);
     var un = Object.keys(u.levelsProgress || {}).filter(function (k) { return u.levelsProgress[k].unlocked; }).length;
-    $("campaignMeta").innerText = "Stage " + Math.min(10, un) + "/10 • " + (BB.Player.totalCampaignStars ? BB.Player.totalCampaignStars() : stars) + "/30 ⭐";
+    $("campaignMeta").innerText = "Stage " + un + "/500 • " + (BB.Player.totalCampaignStars ? BB.Player.totalCampaignStars() : stars) + " ⭐";
     $("survivalMeta").innerText = "Best: " + (u.infiniteHighScore || 0) + " • Wave " + (u.maxWave || 1);
     $("blitzMeta").innerText = "Best: " + (u.blitzHighScore || 0);
 
@@ -117,15 +117,45 @@ BB.UI = (function () {
     }
   }
   var selectedCampId = 1;
+  var selectedCampWorld = 1;
   var selectedPuzId = 1;
 
   function updateCampMissionCard() {
     var l = BB.Content.LEVELS[selectedCampId - 1] || BB.Content.LEVELS[0];
     var tag = $("campTag"), time = $("campTime"), title = $("campTitle"), btn = $("btnLaunchCampaign");
-    if (tag) tag.innerText = "STAGE " + l.id;
-    if (time) time.innerText = "⏱ " + l.time + "s";
-    if (title) title.innerText = l.desc;
-    if (btn) btn.innerText = "▶ PLAY STAGE " + l.id;
+    var u = BB.Save.data, p = (u.levelsProgress && u.levelsProgress[l.id]) || { unlocked: l.id === 1, stars: 0 };
+
+    if (l.isBoss) {
+      if (tag) { tag.innerText = "👑 BOSS STAGE " + l.id; tag.style.background = "linear-gradient(135deg, #ea580c, #9a3412)"; }
+      if (time) time.innerText = "⏱ " + l.time + "s";
+      if (title) title.innerText = l.desc;
+      if (btn) {
+        if (!p.unlocked) {
+          btn.innerText = "🔒 LOCKED (CLEAR STG " + (l.id - 1) + ")";
+          btn.classList.remove("primary");
+          btn.style.opacity = "0.55";
+        } else {
+          btn.innerText = "⚔️ FIGHT BOSS " + l.id;
+          btn.classList.add("primary");
+          btn.style.opacity = "1";
+        }
+      }
+    } else {
+      if (tag) { tag.innerText = "STAGE " + l.id; tag.style.background = "linear-gradient(135deg, #7c3aed, #4c1d95)"; }
+      if (time) time.innerText = "⏱ " + l.time + "s";
+      if (title) title.innerText = l.desc;
+      if (btn) {
+        if (!p.unlocked) {
+          btn.innerText = "🔒 LOCKED (CLEAR STG " + (l.id - 1) + ")";
+          btn.classList.remove("primary");
+          btn.style.opacity = "0.55";
+        } else {
+          btn.innerText = "▶ PLAY STAGE " + l.id;
+          btn.classList.add("primary");
+          btn.style.opacity = "1";
+        }
+      }
+    }
   }
 
   function updatePuzMissionCard() {
@@ -143,30 +173,48 @@ BB.UI = (function () {
     g.innerHTML = "";
     var stars = BB.Player.totalCampaignStars ? BB.Player.totalCampaignStars() : 0, cleared = 0, u = BB.Save.data;
     Object.keys(u.levelsProgress).forEach(function (k) { if (u.levelsProgress[k].stars > 0) cleared++; });
-    $("campaignProgress").innerText = "Progress: " + stars + "/30 ⭐ • " + cleared + "/10 cleared";
+    $("campaignProgress").innerText = "Progress: " + stars + "/1500 ⭐ • " + cleared + "/500 cleared";
 
     // Auto-select latest unlocked stage
     var highestUnlocked = 1;
     BB.Content.LEVELS.forEach(function (l) {
       if (u.levelsProgress[l.id] && u.levelsProgress[l.id].unlocked) highestUnlocked = l.id;
     });
-    if (!u.levelsProgress[selectedCampId] || !u.levelsProgress[selectedCampId].unlocked) {
-      selectedCampId = highestUnlocked;
+
+    // Auto-align world to selected stage if not explicitly set
+    if (!selectedCampWorld) {
+      selectedCampWorld = Math.min(20, Math.floor((highestUnlocked - 1) / 25) + 1);
     }
+    var w = BB.Content.WORLDS[selectedCampWorld - 1] || BB.Content.WORLDS[0];
+    if (selectedCampId < w.start || selectedCampId > w.end) {
+      selectedCampId = w.start;
+    }
+
+    var w = BB.Content.WORLDS[selectedCampWorld - 1] || BB.Content.WORLDS[0];
+    var wTitle = $("worldTitle"), wSub = $("worldSub"), pBtn = $("btnPrevWorld"), nBtn = $("btnNextWorld");
+    if (wTitle) wTitle.innerText = "WORLD " + w.id + ": " + w.name.toUpperCase();
+    if (wSub) wSub.innerText = "Stages " + w.start + " - " + w.end + " • " + w.icon;
+    if (pBtn) pBtn.disabled = (selectedCampWorld <= 1);
+    if (nBtn) nBtn.disabled = (selectedCampWorld >= BB.Content.WORLDS.length);
+
     updateCampMissionCard();
 
-    BB.Content.LEVELS.forEach(function (l) {
+    for (var lid = w.start; lid <= w.end; lid++) {
+      var l = BB.Content.LEVELS[lid - 1];
+      if (!l) break;
       var p = u.levelsProgress[l.id] || { unlocked: l.id === 1, stars: 0 };
       var isSel = (l.id === selectedCampId);
+      var isBoss = !!l.isBoss;
       var c = document.createElement("div");
-      c.className = "arcade-tile" + (p.unlocked ? "" : " locked") + (isSel ? " selected" : "");
-      
+      c.className = "arcade-tile" + (p.unlocked ? "" : " locked") + (isSel ? " selected" : "") + (isBoss ? " boss-tile" : "");
+
       var starStr = p.stars > 0 ? "⭐".repeat(p.stars) : (p.unlocked ? "☆☆☆" : "");
-      c.innerHTML = '<div class="tile-num">' + (p.unlocked ? l.id : "🔒") + "</div>" +
+      var crownBadge = isBoss ? '<span class="boss-crown">👑</span>' : '';
+      c.innerHTML = crownBadge + '<div class="tile-num">' + (p.unlocked ? l.id : "🔒") + "</div>" +
         '<div class="tile-stars">' + starStr + "</div>";
       c.dataset.lvl = l.id; c.dataset.locked = p.unlocked ? "0" : "1";
       g.appendChild(c);
-    });
+    }
 
     if (!g.dataset.bound) {
       g.dataset.bound = "1";
@@ -189,10 +237,41 @@ BB.UI = (function () {
       });
     }
 
+    var prevWBtn = $("btnPrevWorld");
+    if (prevWBtn && !prevWBtn.dataset.bound) {
+      prevWBtn.dataset.bound = "1";
+      prevWBtn.addEventListener("click", function () {
+        if (selectedCampWorld > 1) {
+          selectedCampWorld--;
+          selectedCampId = BB.Content.WORLDS[selectedCampWorld - 1].start;
+          renderCampaignGrid();
+        }
+      });
+    }
+
+    var nextWBtn = $("btnNextWorld");
+    if (nextWBtn && !nextWBtn.dataset.bound) {
+      nextWBtn.dataset.bound = "1";
+      nextWBtn.addEventListener("click", function () {
+        if (selectedCampWorld < BB.Content.WORLDS.length) {
+          selectedCampWorld++;
+          selectedCampId = BB.Content.WORLDS[selectedCampWorld - 1].start;
+          renderCampaignGrid();
+        }
+      });
+    }
+
     var playBtn = $("btnLaunchCampaign");
     if (playBtn && !playBtn.dataset.bound) {
       playBtn.dataset.bound = "1";
       playBtn.addEventListener("click", function () {
+        var u = BB.Save.data;
+        var p = (u.levelsProgress && u.levelsProgress[selectedCampId]) || { unlocked: selectedCampId === 1 };
+        if (!p.unlocked) {
+          BB.Audio.sound.init(); BB.Audio.sound.vibrate(40);
+          announce("🔒 LOCKED", "Clear Stage " + (selectedCampId - 1) + " first!", "#ff5e7a");
+          return;
+        }
         BB.Audio.sound.init();
         startLevel(selectedCampId);
       });
@@ -355,7 +434,7 @@ BB.UI = (function () {
     if (lbl) lbl.innerText = isPz ? "Darts Left" : "Time Left";
     $("mLevelTimeVal").innerText = isPz ? r.time : (r.time + "s");
     $("mLevelRewardVal").innerText = "+" + r.coins + "🪙 +" + r.xp + "XP" + (r.levelUp ? " • LV UP!" : "");
-    var canNext = isPz ? (r.puzzleId < BB.Content.PUZZLES.length) : (currentLevelId < 10);
+    var canNext = isPz ? (r.puzzleId < BB.Content.PUZZLES.length) : (currentLevelId < (BB.Content.MAX_LEVELS || 500));
     $("btnNextStage").style.display = canNext ? "flex" : "none";
     announce(isPz ? "🧠 PUZZLE SOLVED!" : "🎉 STAGE CLEAR!", r.stars + " stars", isPz ? "#00f5d4" : "#33ff77");
     show("levelCompleteScreen");
@@ -460,7 +539,7 @@ BB.UI = (function () {
         if (st.puzzle < BB.Content.PUZZLES.length) BB.Engine.startPuzzle(st.puzzle + 1);
         else { gameState = "HOME"; currentMapTab = "puzzles"; renderLevels(); show("levelSelectScreen"); }
       } else {
-        if (currentLevelId < 10) startLevel(currentLevelId + 1);
+        if (currentLevelId < (BB.Content.MAX_LEVELS || 500)) startLevel(currentLevelId + 1);
         else { gameState = "HOME"; show("homeScreen"); }
       }
     });

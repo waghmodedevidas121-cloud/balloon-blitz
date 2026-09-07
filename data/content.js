@@ -1,18 +1,116 @@
-/* BB.Content — content-driven catalog. Add LEVEL 11 / NEW BALLOON / NEW SKIN here, no engine rewrite. */
+/* BB.Content — content-driven catalog with 500 Progressive Levels & 20 Worlds. */
 window.BB = window.BB || {};
-BB.Content = {
-  LEVELS: [
-    { id: 1, target: 18, time: 40, desc: "Pop 18 balloons" },
-    { id: 2, target: 30, time: 35, desc: "Pop 30 balloons" },
-    { id: 3, target: 4, time: 30, desc: "Pop 4 Golden balloons", type: "gold" },
-    { id: 4, target: 3, time: 30, desc: "Detonate 3 Bombs", type: "bomb" },
-    { id: 5, target: 4, time: 30, desc: "Pop 4 Slow-Mo balloons", type: "freeze" },
-    { id: 6, target: 12, time: 30, desc: "Reach 12x Combo", type: "combo" },
-    { id: 7, target: 45, time: 35, desc: "Pop 45 Fast balloons" },
-    { id: 8, target: 5, time: 35, desc: "Detonate 5 Bombs", type: "bomb" },
-    { id: 9, target: 2, time: 40, desc: "Trigger 2 Fevers", type: "fever" },
-    { id: 10, target: 2000, time: 40, desc: "Score 2,000 pts", type: "score" }
-  ],
+
+(function () {
+  var WORLDS = [
+    { id: 1,  name: "Sunny Valley",      icon: "☀️", start: 1,   end: 25 },
+    { id: 2,  name: "Rainbow Meadow",     icon: "🌈", start: 26,  end: 50 },
+    { id: 3,  name: "Neon Carnival",      icon: "🎪", start: 51,  end: 75 },
+    { id: 4,  name: "Thunder Grove",      icon: "⚡", start: 76,  end: 100 },
+    { id: 5,  name: "Candy Kingdom",      icon: "🍭", start: 101, end: 125 },
+    { id: 6,  name: "Frost Glacier",      icon: "❄️", start: 126, end: 150 },
+    { id: 7,  name: "Molten Volcano",     icon: "🌋", start: 151, end: 175 },
+    { id: 8,  name: "Mystic Jungle",      icon: "🌴", start: 176, end: 200 },
+    { id: 9,  name: "Crystal Cavern",     icon: "💎", start: 201, end: 225 },
+    { id: 10, name: "Sky Citadel",        icon: "🏰", start: 226, end: 250 },
+    { id: 11, name: "Starry Twilight",    icon: "✨", start: 251, end: 275 },
+    { id: 12, name: "Deep Coral",         icon: "🌊", start: 276, end: 300 },
+    { id: 13, name: "Cyber Metropolis",   icon: "🏙️", start: 301, end: 325 },
+    { id: 14, name: "Solar Flares",       icon: "☀️", start: 326, end: 350 },
+    { id: 15, name: "Phantom Castle",     icon: "👻", start: 351, end: 375 },
+    { id: 16, name: "Diamond Peaks",      icon: "🔷", start: 376, end: 400 },
+    { id: 17, name: "Dragon's Lair",      icon: "🐉", start: 401, end: 425 },
+    { id: 18, name: "Vortex Nebula",      icon: "🌀", start: 426, end: 450 },
+    { id: 19, name: "Galactic Gates",     icon: "🚀", start: 451, end: 475 },
+    { id: 20, name: "Cosmic Apex",        icon: "👑", start: 476, end: 500 }
+  ];
+
+  function generate500Levels() {
+    var arr = [];
+    var types = ["pop", "gold", "bomb", "freeze", "combo", "score", "shield", "pop"];
+    var tutorial = [
+      { target: 18, time: 40, desc: "Pop 18 balloons", type: "pop" },
+      { target: 30, time: 35, desc: "Pop 30 balloons", type: "pop" },
+      { target: 4,  time: 30, desc: "Pop 4 Golden balloons", type: "gold" },
+      { target: 3,  time: 30, desc: "Detonate 3 Bombs", type: "bomb" },
+      { target: 4,  time: 30, desc: "Pop 4 Slow-Mo balloons", type: "freeze" },
+      { target: 12, time: 30, desc: "Reach 12x Combo", type: "combo" },
+      { target: 45, time: 35, desc: "Pop 45 Fast balloons", type: "pop" },
+      { target: 5,  time: 35, desc: "Detonate 5 Bombs", type: "bomb" },
+      { target: 2,  time: 40, desc: "Trigger 2 Fevers", type: "fever" }
+    ];
+
+    for (var i = 1; i <= 500; i++) {
+      var isBoss = (i % 10 === 0);
+      var worldIdx = Math.floor((i - 1) / 25);
+      var speedScale = 1.0 + Math.min(1.8, (i - 1) * 0.0035);
+      var hasShields = (i >= 30);
+      var hasHazards = (i >= 50);
+
+      if (isBoss) {
+        var bossHp = 15 + Math.floor(i * 0.28);
+        arr.push({
+          id: i,
+          isBoss: true,
+          target: bossHp,
+          time: Math.max(30, 45 - Math.floor(i * 0.02)),
+          desc: "Defeat King Blimp (" + bossHp + " HP)",
+          type: "boss",
+          speedMult: speedScale,
+          hasShields: hasShields,
+          hasHazards: hasHazards,
+          world: worldIdx + 1
+        });
+      } else if (i <= 9) {
+        var tut = tutorial[i - 1];
+        arr.push(Object.assign({ id: i, speedMult: 1.0, world: 1 }, tut));
+      } else {
+        var t = types[(i * 3 + 5) % types.length];
+        var targetVal = 20, descStr = "", timeLimit = Math.max(28, 42 - Math.floor(i * 0.025));
+
+        if (t === "pop") {
+          targetVal = 25 + Math.min(80, Math.floor(i * 0.18));
+          descStr = "Pop " + targetVal + " balloons";
+        } else if (t === "gold") {
+          targetVal = 4 + Math.min(12, Math.floor(i * 0.03));
+          descStr = "Collect " + targetVal + " Gold balloons";
+        } else if (t === "bomb") {
+          targetVal = 4 + Math.min(10, Math.floor(i * 0.025));
+          descStr = "Detonate " + targetVal + " Bombs";
+        } else if (t === "freeze") {
+          targetVal = 4 + Math.min(10, Math.floor(i * 0.025));
+          descStr = "Pop " + targetVal + " Slow-Mo balloons";
+        } else if (t === "combo") {
+          targetVal = Math.min(25, 10 + Math.floor(i * 0.04));
+          descStr = "Reach " + targetVal + "x Combo";
+        } else if (t === "score") {
+          targetVal = 1500 + i * 25;
+          descStr = "Score " + targetVal.toLocaleString() + " pts";
+        } else if (t === "shield") {
+          targetVal = 5 + Math.min(15, Math.floor(i * 0.04));
+          descStr = "Shatter " + targetVal + " Shields 🛡️";
+        }
+
+        arr.push({
+          id: i,
+          target: targetVal,
+          time: timeLimit,
+          desc: descStr,
+          type: t,
+          speedMult: speedScale,
+          hasShields: hasShields,
+          hasHazards: hasHazards,
+          world: worldIdx + 1
+        });
+      }
+    }
+    return arr;
+  }
+
+  window.BB.Content = {
+    WORLDS: WORLDS,
+    LEVELS: generate500Levels(),
+    MAX_LEVELS: 500,
   PUZZLES: [
     {
       id: 1,
@@ -209,3 +307,4 @@ BB.Content = {
     { id: "m_fever",  name: "Fever Dream",  desc: "Trigger Fever once",     target: 1,    reward: { coins: 40 }, metric: "fever" }
   ]
 };
+})();
