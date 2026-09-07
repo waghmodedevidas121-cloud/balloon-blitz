@@ -24,129 +24,227 @@ function mixc(hex, target, t) {
   var f = function (a, b) { return Math.round(a + (b - a) * t); };
   return "rgb(" + f(c.r, target[0]) + "," + f(c.g, target[1]) + "," + f(c.b, target[2]) + ")";
 }
+function getCartoonOutline(colorHex, kind) {
+  if (kind === "bomb") return "#161928";
+  if (kind === "gift") return "#2e0854";
+  if (kind === "freeze") return "#043c4a";
+  var c = hexToRgb(colorHex);
+  var r = Math.max(10, Math.round(c.r * 0.32));
+  var g = Math.max(10, Math.round(c.g * 0.32));
+  var b = Math.max(10, Math.round(c.b * 0.32));
+  return "rgb(" + r + "," + g + "," + b + ")";
+}
+
 function getSprite(key, color, kind, radius) {
   var id = key + "|" + kind + "|" + radius;
   if (SPRITES[id]) return SPRITES[id];
   var SS = 2;
-  var S = Math.ceil(radius * 2 * 1.5 + 12);
+  var S = Math.ceil(radius * 2 * 1.5 + 14);
   var W = Math.ceil(S * SS);
   var cv = document.createElement("canvas"); cv.width = W; cv.height = W;
   var g = cv.getContext("2d"); g.scale(SS, SS);
-  var cx = S / 2, cy = S * 0.47, r = radius;
+  var cx = S / 2, cy = S * 0.46, r = radius;
 
+  // 1) Smooth cartoon balloon silhouette
   function body() {
     g.beginPath();
-    g.moveTo(cx - r * 0.12, cy + r * 1.05);
-    g.bezierCurveTo(cx - r * 0.95, cy + r * 0.82, cx - r * 1.08, cy - r * 0.25, cx - r * 0.98, cy - r * 0.42);
-    g.bezierCurveTo(cx - r * 0.86, cy - r * 1.05, cx - r * 0.34, cy - r * 1.22, cx, cy - r * 1.22);
-    g.bezierCurveTo(cx + r * 0.34, cy - r * 1.22, cx + r * 0.86, cy - r * 1.05, cx + r * 0.98, cy - r * 0.42);
-    g.bezierCurveTo(cx + r * 1.08, cy - r * 0.25, cx + r * 0.95, cy + r * 0.82, cx + r * 0.12, cy + r * 1.05);
+    g.moveTo(cx - r * 0.14, cy + r * 1.05);
+    g.bezierCurveTo(cx - r * 0.96, cy + r * 0.82, cx - r * 1.08, cy - r * 0.25, cx - r * 0.98, cy - r * 0.42);
+    g.bezierCurveTo(cx - r * 0.86, cy - r * 1.08, cx - r * 0.36, cy - r * 1.24, cx, cy - r * 1.24);
+    g.bezierCurveTo(cx + r * 0.36, cy - r * 1.24, cx + r * 0.86, cy - r * 1.08, cx + r * 0.98, cy - r * 0.42);
+    g.bezierCurveTo(cx + r * 1.08, cy - r * 0.25, cx + r * 0.96, cy + r * 0.82, cx + r * 0.14, cy + r * 1.05);
     g.closePath();
   }
-  function star8(sx, sy, sr) {
+
+  var outline = getCartoonOutline(color, kind);
+
+  // 2) Bright vibrant cartoon base fill
+  body();
+  if (kind === "bomb") {
+    var bg = g.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.1, cx, cy, r * 1.2);
+    bg.addColorStop(0, "#3d4257"); bg.addColorStop(0.6, "#222533"); bg.addColorStop(1, "#11131c");
+    g.fillStyle = bg;
+  } else if (kind === "gift") {
+    var gg = g.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.1, cx, cy, r * 1.2);
+    gg.addColorStop(0, "#a855f7"); gg.addColorStop(0.7, "#7e22ce"); gg.addColorStop(1, "#4c1d95");
+    g.fillStyle = gg;
+  } else if (kind === "freeze") {
+    var fg = g.createRadialGradient(cx - r * 0.3, cy - r * 0.4, r * 0.1, cx, cy, r * 1.2);
+    fg.addColorStop(0, "#67e8f9"); fg.addColorStop(0.7, "#06b6d4"); fg.addColorStop(1, "#0e7490");
+    g.fillStyle = fg;
+  } else {
+    var cg = g.createLinearGradient(0, cy - r * 1.24, 0, cy + r * 1.05);
+    cg.addColorStop(0, mixc(color, [255, 255, 255], 0.22));
+    cg.addColorStop(0.5, color);
+    cg.addColorStop(1, mixc(color, [10, 10, 20], 0.25));
+    g.fillStyle = cg;
+  }
+  g.fill();
+
+  // 3) ARTWORK DIRECTLY FROM REFERENCE IMAGE:
+  if (key === "RED") {
+    // RED BALLOON (Top-Left of Reference Image!): CUTE WINK FACE 😉
+    var ex = r * 0.30, ey = -r * 0.04;
+    // Left eye: Big open cartoon eye with dual catchlights
+    g.fillStyle = "#ffffff";
+    g.beginPath(); g.ellipse(cx - ex, cy + ey, r * 0.26, r * 0.34, -0.06, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#1e1e2f";
+    g.beginPath(); g.arc(cx - ex + r * 0.04, cy + ey, r * 0.16, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#ffffff";
+    g.beginPath(); g.arc(cx - ex + r * 0.02, cy + ey - r * 0.06, r * 0.065, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(cx - ex + r * 0.08, cy + ey + r * 0.04, r * 0.03, 0, Math.PI * 2); g.fill();
+
+    // Right eye: Cute bold winking arc!
+    g.strokeStyle = "#1e1e2f";
+    g.lineWidth = Math.max(3.2, r * 0.12);
+    g.lineCap = "round";
     g.beginPath();
-    for (var i = 0; i < 8; i++) {
-      var a2 = i * Math.PI / 4;
-      var rr2 = (i % 2 === 0) ? sr : sr * 0.42;
-      var px = sx + Math.cos(a2) * rr2, py = sy + Math.sin(a2) * rr2;
-      if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
+    g.arc(cx + ex, cy + ey + r * 0.04, r * 0.20, Math.PI * 1.15, Math.PI * 1.85);
+    g.stroke();
+
+    // Cute curved smile
+    g.strokeStyle = "#1e1e2f";
+    g.lineWidth = Math.max(2.6, r * 0.09);
+    g.beginPath();
+    g.arc(cx, cy + r * 0.20, r * 0.22, Math.PI * 0.15, Math.PI * 0.85);
+    g.stroke();
+
+    // Rosy pink blush cheeks
+    g.fillStyle = "rgba(255, 70, 110, 0.55)";
+    g.beginPath(); g.ellipse(cx - ex - r * 0.04, cy + r * 0.26, r * 0.14, r * 0.08, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(cx + ex + r * 0.04, cy + r * 0.26, r * 0.14, r * 0.08, 0, 0, Math.PI * 2); g.fill();
+  }
+  else if (key === "PINK") {
+    // PINK BALLOON (Held by Giraffe in Reference Image!): HUGE ADORABLE CARTOON EYES!
+    var ex2 = r * 0.30, ey2 = -r * 0.04;
+    var er_w = r * 0.26, er_h = r * 0.34;
+    [-ex2, ex2].forEach(function(pos) {
+      g.fillStyle = "#ffffff";
+      g.beginPath(); g.ellipse(cx + pos, cy + ey2, er_w, er_h, pos > 0 ? 0.06 : -0.06, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#1e1e2f";
+      g.beginPath(); g.arc(cx + pos + (pos > 0 ? -r * 0.03 : r * 0.03), cy + ey2, r * 0.16, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#ffffff";
+      g.beginPath(); g.arc(cx + pos + (pos > 0 ? -r * 0.05 : r * 0.01), cy + ey2 - r * 0.06, r * 0.065, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.arc(cx + pos + (pos > 0 ? -r * 0.01 : r * 0.05), cy + ey2 + r * 0.04, r * 0.032, 0, Math.PI * 2); g.fill();
+    });
+    // Cute curved smile
+    g.strokeStyle = "#1e1e2f"; g.lineWidth = Math.max(2.6, r * 0.09); g.lineCap = "round";
+    g.beginPath(); g.arc(cx, cy + r * 0.20, r * 0.22, Math.PI * 0.15, Math.PI * 0.85); g.stroke();
+    // Rosy pink blush cheeks
+    g.fillStyle = "rgba(255, 40, 90, 0.45)";
+    g.beginPath(); g.ellipse(cx - ex2 - r * 0.04, cy + r * 0.26, r * 0.14, r * 0.08, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.ellipse(cx + ex2 + r * 0.04, cy + r * 0.26, r * 0.14, r * 0.08, 0, 0, Math.PI * 2); g.fill();
+  }
+  else if (key === "GREEN") {
+    // GREEN BALLOON (Top-Center of Reference Image!): CARTOON LETTER "A"
+    g.font = "900 " + Math.floor(r * 1.1) + "px Arial Rounded MT Bold, 'Comic Sans MS', sans-serif";
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.lineJoin = "round";
+    g.strokeStyle = "#2b0d52"; g.lineWidth = Math.max(4, r * 0.18);
+    g.strokeText("A", cx, cy + r * 0.04);
+    g.fillStyle = "#a855f7";
+    g.fillText("A", cx, cy + r * 0.04);
+  }
+  else if (key === "BLUE") {
+    // BLUE BALLOON (Bottom-Left of Reference Image!): CARTOON PINK HEART ❤️
+    var hw = r * 0.44, hy = cy + r * 0.06;
+    g.save();
+    g.beginPath();
+    g.moveTo(cx, hy + hw * 0.85);
+    g.bezierCurveTo(cx - hw * 1.35, hy + hw * 0.15, cx - hw * 1.15, hy - hw * 0.95, cx, hy - hw * 0.45);
+    g.bezierCurveTo(cx + hw * 1.15, hy - hw * 0.95, cx + hw * 1.35, hy + hw * 0.15, cx, hy + hw * 0.85);
+    g.closePath();
+    g.strokeStyle = "#082c44"; g.lineWidth = Math.max(3.5, r * 0.14); g.lineJoin = "round";
+    g.stroke();
+    g.fillStyle = "#ff9ec4";
+    g.fill();
+    g.restore();
+  }
+  else if (kind === "gold") {
+    // GOLD BALLOON (Top-Right of Reference Image!): CARTOON NUMBER "2"
+    g.font = "900 " + Math.floor(r * 1.1) + "px Arial Rounded MT Bold, 'Comic Sans MS', sans-serif";
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.lineJoin = "round";
+    g.strokeStyle = "#52082b"; g.lineWidth = Math.max(4, r * 0.18);
+    g.strokeText("2", cx, cy + r * 0.04);
+    g.fillStyle = "#ff4785";
+    g.fillText("2", cx, cy + r * 0.04);
+  }
+  else if (kind === "bomb") {
+    // CARTOON BOMB: Bold Red Danger Badge "!"
+    g.fillStyle = "#ff3344";
+    g.beginPath(); g.arc(cx, cy + r * 0.08, r * 0.38, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#ffffff";
+    g.font = "900 " + Math.floor(r * 0.50) + "px Arial Rounded MT Bold, sans-serif";
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillText("!", cx, cy + r * 0.10);
+  }
+  else if (kind === "freeze") {
+    // FREEZE BALLOON: Bold Cartoon Snowflake
+    g.strokeStyle = "rgba(255, 255, 255, 0.95)";
+    g.lineWidth = Math.max(2.5, r * 0.09); g.lineCap = "round";
+    var R1 = r * 0.52;
+    g.beginPath();
+    for (var s1 = 0; s1 < 3; s1++) {
+      var ang = s1 * Math.PI / 3 + Math.PI / 6;
+      var dx1 = Math.cos(ang) * R1, dy1 = Math.sin(ang) * R1;
+      g.moveTo(cx - dx1, cy - dy1); g.lineTo(cx + dx1, cy + dy1);
     }
-    g.closePath(); g.fill();
+    g.stroke();
+  }
+  else if (kind === "gift") {
+    // GIFT BALLOON: Cartoon Gift Box
+    var bw = r * 0.60, bh = r * 0.50, byy = cy + r * 0.06;
+    g.fillStyle = "rgba(255, 255, 255, 0.95)";
+    g.fillRect(cx - bw / 2, byy - bh / 2, bw, bh);
+    g.fillStyle = "#f59e0b";
+    g.fillRect(cx - r * 0.07, byy - bh / 2, r * 0.14, bh);
+    g.fillRect(cx - bw / 2, byy - r * 0.07, bw, r * 0.14);
   }
 
-  var outline = kind === "bomb" ? "#ff4757"
-    : kind === "gift" ? "#d9b3ff"
-    : mixc(color, [25, 20, 45], 0.5);
-
-  // 1) flat bright base fill
+  // 4) SIGNATURE BOLD WHITE CARTOON SHINE (Directly from Reference Image!)
+  g.save();
   body();
-  g.fillStyle = (kind === "bomb") ? "#23273a" : (kind === "gift" ? "#4a2b7d" : color);
-  g.fill();
-
-  g.save(); body(); g.clip();
-  // 2) soft top light wash
-  var tl = g.createLinearGradient(0, cy - r * 1.22, 0, cy + r * 0.15);
-  tl.addColorStop(0, "rgba(255,255,255,.30)");
-  tl.addColorStop(1, "rgba(255,255,255,0)");
-  g.fillStyle = tl;
-  g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
-  // 3) simple bottom shade band
-  var bd = g.createLinearGradient(0, cy + r * 0.2, 0, cy + r * 1.05);
-  bd.addColorStop(0, "rgba(20,10,40,0)");
-  bd.addColorStop(1, "rgba(20,10,40,.32)");
-  g.fillStyle = bd;
-  g.fillRect(cx - r * 1.3, cy - r * 1.4, r * 2.6, r * 2.8);
-  g.restore();
-
-  // 4) BOLD cartoon shine streak (signature look)
-  g.save(); body(); g.clip();
-  g.strokeStyle = "rgba(255,255,255,.90)";
-  g.lineCap = "round"; g.lineWidth = r * 0.20;
+  g.clip();
+  // Thick white crescent hugging the top-left curve
+  g.strokeStyle = "rgba(255, 255, 255, 0.92)";
+  g.lineWidth = r * 0.22;
+  g.lineCap = "round";
   g.beginPath();
-  g.moveTo(cx - r * 0.62, cy - r * 0.28);
-  g.quadraticCurveTo(cx - r * 0.60, cy - r * 0.72, cx - r * 0.28, cy - r * 0.88);
+  g.arc(cx - r * 0.15, cy - r * 0.12, r * 0.76, Math.PI * 0.84, Math.PI * 1.36);
   g.stroke();
-  g.fillStyle = "rgba(255,255,255,.85)";
-  g.beginPath(); g.arc(cx - r * 0.17, cy - r * 0.95, r * 0.07, 0, Math.PI * 2); g.fill();
+  // Separate crisp white oval highlight dot near crown
+  g.fillStyle = "rgba(255, 255, 255, 0.92)";
+  g.beginPath();
+  g.arc(cx - r * 0.18, cy - r * 0.88, r * 0.08, 0, Math.PI * 2);
+  g.fill();
   g.restore();
 
-  // 5) cute cartoon faces (expressive variety like the reference image!)
-  if (kind === "normal" || kind === "gold") {
-    var ex = r * 0.22, ey = -r * 0.02, er = r * 0.15;
-    if (key === "RED") {
-      // Red balloon: adorable wink like reference image! 😉
-      g.strokeStyle = "#1e2238"; g.lineWidth = Math.max(2, r * 0.09); g.lineCap = "round";
-      g.beginPath(); g.arc(cx - ex, cy + ey + r * 0.03, er * 0.85, Math.PI * 1.15, Math.PI * 1.85); g.stroke();
-      // Right eye big and open
-      g.fillStyle = "#ffffff";
-      g.beginPath(); g.ellipse(cx + ex, cy + ey, er, er * 1.25, 0, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#1e2238";
-      g.beginPath(); g.arc(cx + ex, cy + ey - r * 0.02, r * 0.08, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#ffffff";
-      g.beginPath(); g.arc(cx + ex - r * 0.03, cy + ey - r * 0.05, r * 0.035, 0, Math.PI * 2); g.fill();
-    } else {
-      // Big friendly curious cartoon eyes
-      g.fillStyle = "#ffffff";
-      g.beginPath(); g.ellipse(cx - ex, cy + ey, er, er * 1.25, 0, 0, Math.PI * 2); g.fill();
-      g.beginPath(); g.ellipse(cx + ex, cy + ey, er, er * 1.25, 0, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#1e2238";
-      g.beginPath(); g.arc(cx - ex, cy + ey - r * 0.02, r * 0.08, 0, Math.PI * 2); g.fill();
-      g.beginPath(); g.arc(cx + ex, cy + ey - r * 0.02, r * 0.08, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#ffffff";
-      g.beginPath(); g.arc(cx - ex - r * 0.03, cy + ey - r * 0.05, r * 0.035, 0, Math.PI * 2); g.fill();
-      g.beginPath(); g.arc(cx + ex - r * 0.03, cy + ey - r * 0.05, r * 0.035, 0, Math.PI * 2); g.fill();
-    }
-    // Cute smile
-    g.strokeStyle = "#1e2238"; g.lineWidth = Math.max(2, r * 0.08); g.lineCap = "round";
-    g.beginPath(); g.arc(cx, cy + r * 0.16, r * 0.22, Math.PI * 0.18, Math.PI * 0.82); g.stroke();
-    // Rosy blush cheeks
-    g.fillStyle = "rgba(255, 105, 140, 0.45)";
-    g.beginPath(); g.arc(cx - r * 0.38, cy + r * 0.18, r * 0.09, 0, Math.PI * 2); g.fill();
-    g.beginPath(); g.arc(cx + r * 0.38, cy + r * 0.18, r * 0.09, 0, Math.PI * 2); g.fill();
-  }
-  if (kind === "gold") {
-    g.fillStyle = "rgba(255,255,255,.95)";
-    star8(cx + r * 0.55, cy - r * 0.75, r * 0.10);
-    star8(cx - r * 0.60, cy + r * 0.35, r * 0.07);
-  }
-
-  // 6) dark cartoon outline
+  // 5) THICK BOLD CARTOON OUTLINE (Reference Image Signature!)
   body();
-  g.strokeStyle = outline; g.lineWidth = Math.max(2, r * 0.075);
-  g.lineJoin = "round"; g.stroke();
+  g.strokeStyle = outline;
+  g.lineWidth = Math.max(3.2, r * 0.11);
+  g.lineJoin = "round";
+  g.stroke();
 
-  // knot
+  // 6) CUTE FLARED CARTOON KNOT (Reference Image Signature!)
+  var knotColor = kind === "bomb" ? "#1e2233" : mixc(color, [10, 10, 20], 0.28);
   g.beginPath();
-  g.moveTo(cx - r * 0.10, cy + r * 1.06);
-  g.quadraticCurveTo(cx, cy + r * 1.24, cx + r * 0.10, cy + r * 1.06);
+  g.moveTo(cx - r * 0.14, cy + r * 1.05);
+  g.lineTo(cx - r * 0.22, cy + r * 1.28);
+  g.quadraticCurveTo(cx, cy + r * 1.34, cx + r * 0.22, cy + r * 1.28);
+  g.lineTo(cx + r * 0.14, cy + r * 1.05);
   g.closePath();
-  g.fillStyle = kind === "bomb" ? "#3a3f58" : (kind === "gift" ? "#7b4fd0" : mixc(color, [12, 14, 26], 0.35));
+  g.fillStyle = knotColor;
   g.fill();
-  g.strokeStyle = outline; g.lineWidth = Math.max(1.2, r * 0.05); g.stroke();
+  g.strokeStyle = outline;
+  g.lineWidth = Math.max(2.4, r * 0.08);
+  g.stroke();
 
   SPRITES[id] = { cv: cv, half: S / 2, ss: SS };
   return SPRITES[id];
 }
+
 function drawSprite(x, y, radius, scale, key, color, kind) {
   var sp = getSprite(key, color, kind, radius);
   ctx.save();
@@ -157,6 +255,7 @@ function drawSprite(x, y, radius, scale, key, color, kind) {
   ctx.drawImage(sp.cv, -S / 2, -S / 2 * 0.94, S, S);
   ctx.restore();
 }
+
 var dragStart = {};
 var lastMovePop = 0;
 var inputLockUntil = 0;
@@ -198,86 +297,35 @@ class MobileBalloon {
     ctx.save();
     var k = 0.6 + 0.4 * this.spawnScale;
     var r = this.radius * k;
-    // soft ambient drop shadow behind balloon (depth, not glow)
-    var sh = ctx.createRadialGradient(x + r * 0.18, y + r * 0.30, r * 0.15, x + r * 0.18, y + r * 0.30, r * 1.42);
-    sh.addColorStop(0, "rgba(0,0,0,.34)");
-    sh.addColorStop(0.7, "rgba(0,0,0,.16)");
-    sh.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = sh;
-    ctx.beginPath(); ctx.ellipse(x + r * 0.18, y + r * 0.30, r * 1.30, r * 1.42, 0, 0, Math.PI * 2); ctx.fill();
-    // string: live curve, sways with wobble (natural pendulum feel)
+
+    // String: live pendulum curve swaying naturally with wobble (like Image 1)
     var sw = Math.sin(this.wobble) * this.radius * 0.22;
-    ctx.strokeStyle = "rgba(255,255,255,.38)"; ctx.lineWidth = 1.4; ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = 1.5; ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(x, y + r * 1.16);
-    ctx.bezierCurveTo(x + sw * 0.4, y + r * 1.5, x - sw * 0.5, y + r * 1.8, x + sw, y + r * 2.1);
+    ctx.moveTo(x, y + r * 1.15);
+    ctx.bezierCurveTo(x + sw * 0.4, y + r * 1.5, x - sw * 0.5, y + r * 1.8, x + sw, y + r * 2.15);
     ctx.stroke();
-    // vector-perfect sprite body
+
+    // Draw full cartoon balloon sprite (100% matched to Image 1!)
     drawSprite(x, y, this.radius, this.spawnScale, this.spec.key, base,
       this.spec.isBomb ? "bomb" : this.spec.isGift ? "gift" : this.spec.isGold ? "gold" : this.spec.isFreeze ? "freeze" : "normal");
-    // live vector icons (crisp on every device)
+
+    // Clean bomb wick + glowing spark at top
     if (this.spec.isBomb) {
-      // Brass collar at top
       ctx.fillStyle = "#d35400";
       ctx.fillRect(x - r * 0.12, y - r * 1.18, r * 0.24, r * 0.08);
-      // Clean short curved wick
       ctx.strokeStyle = "#dcdde1"; ctx.lineWidth = Math.max(1.5, r * 0.08); ctx.lineCap = "round";
       ctx.beginPath();
       ctx.moveTo(x, y - r * 1.18);
       ctx.quadraticCurveTo(x + r * 0.16, y - r * 1.34, x + r * 0.26, y - r * 1.28);
       ctx.stroke();
-      // Glowing spark at wick tip (clean circular star)
       var sx = x + r * 0.26, sy = y - r * 1.28;
       ctx.fillStyle = "#ff7675";
       ctx.beginPath(); ctx.arc(sx, sy, Math.max(2, r * 0.10), 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#ffeaa7";
       ctx.beginPath(); ctx.arc(sx, sy, Math.max(1, r * 0.05), 0, Math.PI * 2); ctx.fill();
-      // Center hazard badge (bold cartoon exclamation mark in danger circle)
-      ctx.fillStyle = "#ff4757";
-      ctx.beginPath(); ctx.arc(x, y + r * 0.05, r * 0.32, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "900 " + Math.floor(r * 0.44) + "px Arial";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("!", x, y + r * 0.06);
-    } else if (this.spec.isGift) {
-      // ribbon box icon
-      var bw = r * 0.62, bh = r * 0.52, byy = y + r * 0.06;
-      ctx.strokeStyle = "rgba(255,255,255,.92)"; ctx.lineWidth = Math.max(1.4, r * 0.08);
-      ctx.lineJoin = "round";
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(x - bw / 2, byy - bh / 2, bw, bh, r * 0.1); else ctx.rect(x - bw / 2, byy - bh / 2, bw, bh);
-      ctx.stroke();
-      // ribbon bands
-      ctx.beginPath();
-      ctx.moveTo(x, byy - bh / 2); ctx.lineTo(x, byy + bh / 2);
-      ctx.moveTo(x - bw / 2, byy - bh * 0.12); ctx.lineTo(x + bw / 2, byy - bh * 0.12);
-      ctx.stroke();
-      // bow
-      ctx.beginPath();
-      ctx.arc(x - r * 0.10, byy - bh * 0.72, r * 0.09, 0, Math.PI * 2);
-      ctx.arc(x + r * 0.10, byy - bh * 0.72, r * 0.09, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.fill();
-    } else if (this.spec.isFreeze) {
-      // snowflake: 3 spokes + V ticks
-      ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = Math.max(1.3, r * 0.07); ctx.lineCap = "round";
-      var R1 = r * 0.52;
-      ctx.beginPath();
-      for (var s1 = 0; s1 < 3; s1++) {
-        var ang = s1 * Math.PI / 3 + Math.PI / 6;
-        var dx1 = Math.cos(ang) * R1, dy1 = Math.sin(ang) * R1;
-        ctx.moveTo(x - dx1, y - dy1); ctx.lineTo(x + dx1, y + dy1);
-        // V ticks at both ends
-        var tx = x + dx1 * 0.72, ty = y + dy1 * 0.72;
-        ctx.moveTo(tx, ty); ctx.lineTo(tx - dx1 * 0.28 + dy1 * 0.16, ty - dy1 * 0.28 - dx1 * 0.16);
-        ctx.moveTo(tx, ty); ctx.lineTo(tx - dx1 * 0.28 - dy1 * 0.16, ty - dy1 * 0.28 + dx1 * 0.16);
-        var tx2 = x - dx1 * 0.72, ty2 = y - dy1 * 0.72;
-        ctx.moveTo(tx2, ty2); ctx.lineTo(tx2 + dx1 * 0.28 + dy1 * 0.16, ty2 + dy1 * 0.28 - dx1 * 0.16);
-        ctx.moveTo(tx2, ty2); ctx.lineTo(tx2 + dx1 * 0.28 - dy1 * 0.16, ty2 + dy1 * 0.28 + dx1 * 0.16);
-      }
-      ctx.stroke();
-      ctx.fillStyle = "rgba(255,255,255,.95)";
-      ctx.beginPath(); ctx.arc(x, y, Math.max(1.2, r * 0.06), 0, Math.PI * 2); ctx.fill();
     }
+
     ctx.restore();
   }
   containsPoint(px, py) {
@@ -285,6 +333,7 @@ class MobileBalloon {
     return (dx * dx + dy * dy) <= (hr * hr);
   }
 }
+
 class MobileParticle {
   constructor(x, y, color, heavy) {
     this.x = x; this.y = y; this.color = color;
@@ -635,6 +684,11 @@ function updateHud() {
   document.getElementById("mBestVal").innerText = best;
   document.getElementById("mComboVal").innerText = "x" + combo;
   document.getElementById("mCoinVal").innerText = BB.Save.data.coins || 0;
+  if (combo > 1) {
+    document.body.classList.add("combo-active");
+  } else {
+    document.body.classList.remove("combo-active");
+  }
   if (gameMode === "BLITZ") {
     document.getElementById("hudModeVal").innerText = "BLITZ";
     document.getElementById("mTargetLbl").innerText = "TIME";

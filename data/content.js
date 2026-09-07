@@ -14,13 +14,14 @@ BB.Content = {
     { id: 10, target: 2000, time: 40, desc: "Score 2,000 pts", type: "score" }
   ],
   SPECS: {
-    RED:    { key: "RED",    color: "#ff4b43", points: 10,  speed: 2.2, r: 30, prob: 0.32 },
-    BLUE:   { key: "BLUE",   color: "#2fa8f5", points: 20,  speed: 2.7, r: 28, prob: 0.23 },
-    GREEN:  { key: "GREEN",  color: "#3ddc5b", points: 30,  speed: 3.1, r: 26, prob: 0.18 },
-    GOLD:   { key: "GOLD",   color: "#ffc83d", points: 100, speed: 4.5, r: 24, prob: 0.08, isGold: true },
-    BOMB:   { key: "BOMB",   color: "#161826", points: 0,   speed: 2.0, r: 32, prob: 0.07, isBomb: true },
-    FREEZE: { key: "FREEZE", color: "#25d3c2", points: 25,  speed: 2.3, r: 26, prob: 0.05, isFreeze: true },
-    GIFT:   { key: "GIFT",   color: "#b565f7", points: 15,  speed: 2.6, r: 27, prob: 0.07, isGift: true }
+    RED:    { key: "RED",    color: "#ff3823", points: 10,  speed: 2.2, r: 36, prob: 0.22 },
+    PINK:   { key: "PINK",   color: "#ff4da6", points: 15,  speed: 2.3, r: 36, prob: 0.20 },
+    BLUE:   { key: "BLUE",   color: "#1bb2eb", points: 20,  speed: 2.7, r: 34, prob: 0.20 },
+    GREEN:  { key: "GREEN",  color: "#42d61a", points: 30,  speed: 3.0, r: 34, prob: 0.16 },
+    GOLD:   { key: "GOLD",   color: "#ffcc00", points: 100, speed: 4.4, r: 33, prob: 0.07, isGold: true },
+    BOMB:   { key: "BOMB",   color: "#222533", points: 0,   speed: 2.0, r: 36, prob: 0.05, isBomb: true },
+    FREEZE: { key: "FREEZE", color: "#00e5ff", points: 25,  speed: 2.3, r: 34, prob: 0.05, isFreeze: true },
+    GIFT:   { key: "GIFT",   color: "#a855f7", points: 15,  speed: 2.6, r: 34, prob: 0.05, isGift: true }
   },
   SKINS: [
     { id: "default", name: "Classic Pop", cost: { coins: 0 }, colors: null, desc: "Original arcade look" },
