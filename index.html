@@ -165,24 +165,39 @@
 </div>
 
 <div class="overlay-view hidden" id="levelSelectScreen">
-  <div class="mobile-card">
+  <div class="mobile-card level-select-card">
     <div class="map-mode-tabs">
       <button class="map-tab active" id="tabCampaign">🎯 CAMPAIGN</button>
       <button class="map-tab" id="tabPuzzles">🧩 PUZZLES</button>
     </div>
     <div id="campaignMapContainer">
-      <h2 style="font-size:20px;font-weight:900;margin-top:6px">CAMPAIGN MAP</h2>
-      <p style="color:var(--muted);font-size:11px;margin:4px 0 6px">Level 1 → Level 10 • earn 3 stars each</p>
-      <div class="campaign-progress" id="campaignProgress"></div>
-      <div class="mobile-levels-grid" id="mLevelsGrid"></div>
+      <div class="campaign-progress" id="campaignProgress">Progress: 0/30 ⭐ • 0/10 cleared</div>
+      <div class="arcade-tiles-grid" id="mLevelsGrid"></div>
+      <!-- Selected Stage Mission Card -->
+      <div class="stage-mission-card" id="campaignMissionCard">
+        <div class="smc-top">
+          <span class="smc-badge" id="campTag">STAGE 1</span>
+          <span class="smc-time" id="campTime">⏱ 40s</span>
+        </div>
+        <div class="smc-title" id="campTitle">Pop 18 balloons</div>
+        <button class="btn-tap primary smc-play" id="btnLaunchCampaign">▶ PLAY STAGE 1</button>
+      </div>
     </div>
     <div id="puzzleMapContainer" style="display:none">
-      <h2 style="font-size:20px;font-weight:900;margin-top:6px">TACTICAL PUZZLES</h2>
-      <p style="color:var(--muted);font-size:11px;margin:4px 0 6px">No timer • Limited darts • Trigger chain reactions!</p>
-      <div class="campaign-progress" id="puzzleProgress"></div>
-      <div class="mobile-levels-grid" id="mPuzzlesGrid"></div>
+      <div class="campaign-progress" id="puzzleProgress">Progress: 0/30 ⭐ • 0/10 cleared</div>
+      <div class="arcade-tiles-grid" id="mPuzzlesGrid"></div>
+      <!-- Selected Puzzle Mission Card -->
+      <div class="stage-mission-card puzzle-card-theme" id="puzzleMissionCard">
+        <div class="smc-top">
+          <span class="smc-badge" id="puzTag">PUZZLE 1</span>
+          <span class="smc-time" id="puzDarts">🎯 1 Dart</span>
+        </div>
+        <div class="smc-title" id="puzTitle">The First Domino</div>
+        <div class="smc-sub" id="puzDesc">Follow the arrows! Find the starting trigger!</div>
+        <button class="btn-tap primary smc-play" id="btnLaunchPuzzle">▶ SOLVE PUZZLE 1</button>
+      </div>
     </div>
-    <div class="mobile-actions"><button class="btn-tap" id="btnBackLevels">⬅️ Home</button></div>
+    <div class="mobile-actions" style="margin-top:10px"><button class="btn-tap" id="btnBackLevels">⬅️ Home</button></div>
   </div>
 </div>
 

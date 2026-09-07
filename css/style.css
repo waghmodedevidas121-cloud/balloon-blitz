@@ -952,61 +952,139 @@ body.combo-active #hudComboPill {
   font-size: 12px;
   font-weight: 800;
   color: var(--gold);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
-.mobile-levels-grid {
+/* ================= 5x2 ARCADE LEVEL TILES GRID ================= */
+.arcade-tiles-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
   width: 100%;
   margin: 6px 0 12px 0;
 }
 
-.m-lvl-card {
-  background: linear-gradient(180deg, rgba(28, 38, 86, 0.9) 0%, rgba(16, 22, 56, 0.95) 100%);
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 3.5px solid rgba(8, 12, 34, 0.9);
+.arcade-tile {
+  aspect-ratio: 1;
   border-radius: 16px;
-  padding: 10px;
+  background: linear-gradient(180deg, #2a3a78 0%, #172048 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 3.5px solid #0c102a;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  text-align: left;
-  transition: transform 0.08s ease;
-}
-
-.m-lvl-card:active:not(.locked) { transform: translateY(2px); }
-.m-lvl-card.locked { opacity: 0.45; filter: grayscale(0.6); }
-
-.m-lvl-card.current {
-  border-color: var(--gold);
-  box-shadow: 0 0 16px var(--gold-glow);
-}
-
-.m-lvl-num {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #334155, #1e293b);
-  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.08s ease, border-color 0.1s ease;
+  position: relative;
+  padding: 2px;
+}
+
+.arcade-tile:active:not(.locked) {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+
+.arcade-tile.selected {
+  border-color: var(--gold);
+  border-bottom-color: var(--gold-dark);
+  background: linear-gradient(180deg, #3d4a8e 0%, #202b5e 100%);
+  box-shadow: 0 0 16px var(--gold-glow);
+  transform: scale(1.05);
+}
+
+.arcade-tile.locked {
+  opacity: 0.45;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+}
+
+.tile-num {
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  line-height: 1;
+}
+
+.arcade-tile.selected .tile-num {
+  color: var(--gold);
+}
+
+.tile-stars {
+  font-size: 8px;
+  margin-top: 3px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+/* ================= FEATURED STAGE MISSION CARD ================= */
+.stage-mission-card {
+  width: 100%;
+  background: linear-gradient(180deg, rgba(30, 42, 94, 0.95) 0%, rgba(18, 24, 60, 0.98) 100%);
+  border: 2px solid rgba(139, 92, 246, 0.5);
+  border-bottom: 4px solid #3b1675;
+  border-radius: 20px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  text-align: left;
+  margin-bottom: 6px;
+}
+
+.stage-mission-card.puzzle-card-theme {
+  border-color: rgba(16, 185, 129, 0.5);
+  border-bottom-color: #044734;
+}
+
+.smc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.smc-badge {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #7c3aed, #4c1d95);
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+.puzzle-card-theme .smc-badge {
+  background: linear-gradient(135deg, #059669, #064e3b);
+}
+
+.smc-time {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.smc-title {
   font-size: 15px;
   font-weight: 900;
-  flex-shrink: 0;
+  color: #ffffff;
+  margin-bottom: 2px;
+  letter-spacing: 0.3px;
 }
 
-.m-lvl-card.current .m-lvl-num {
-  background: linear-gradient(135deg, #ffbe0b, #f59e0b);
-  color: #1a1000;
+.smc-sub {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 8px;
 }
 
-.m-lvl-info { flex: 1; min-width: 0; }
-.m-lvl-obj { font-size: 11px; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.m-lvl-sub { font-size: 9px; font-weight: 700; color: var(--muted); margin-top: 1px; }
-.m-lvl-stars { font-size: 10px; margin-top: 2px; }
+.smc-play {
+  width: 100%;
+  padding: 12px 0;
+  font-size: 15px;
+  margin-top: 6px;
+}
 
 /* ================= MODAL STATS GRID (VICTORY & GAMEOVER) ================= */
 .m-stats-grid {
