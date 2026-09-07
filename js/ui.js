@@ -5,6 +5,7 @@ BB.UI = (function () {
     "boardScreen", "levelCompleteScreen", "gameOverScreen", "pauseScreen", "settingsModal", "howToModal", "dailyModal"];
   var NAV = ["homeScreen", "levelSelectScreen", "shopScreen", "boardScreen", "dashboardScreen"];
   var annT = null;
+  var currentMapTab = "campaign";
   function $(id) { return document.getElementById(id); }
   function announce(main, sub, color) {
     $("annMain").textContent = main;
@@ -34,8 +35,8 @@ BB.UI = (function () {
     var st = BB.Engine.state(), playing = (st.state === "PLAYING" || st.state === "PAUSED");
     if (playing) { try { BB.Engine.lockInput(); } catch (e) {} }
     $("mobileHud").style.display = playing ? "flex" : "none";
-    $("mobileBottomHud").style.display = playing ? "flex" : "none";
-    $("mobileObjBanner").style.display = (playing && st.mode === "LEVELS") ? "block" : "none";
+    $("mobileBottomHud").style.display = (playing && st.mode !== "PUZZLE") ? "flex" : "none";
+    $("mobileObjBanner").style.display = (playing && (st.mode === "LEVELS" || st.mode === "PUZZLE")) ? "block" : "none";
     var navOn = (!playing && NAV.indexOf(id) >= 0);
     $("bottomNav").style.display = navOn ? "flex" : "none";
     document.body.classList.toggle("nav-visible", navOn);
@@ -65,9 +66,22 @@ BB.UI = (function () {
     $("homeStars").innerText = stars + "⭐";
     $("homeCombo").innerText = "x" + (u.maxCombo || 1);
     var un = Object.keys(u.levelsProgress || {}).filter(function (k) { return u.levelsProgress[k].unlocked; }).length;
-    $("campaignMeta").innerText = "Stage " + Math.min(10, un) + "/10 • " + stars + "/30 ⭐";
+    $("campaignMeta").innerText = "Stage " + Math.min(10, un) + "/10 • " + (BB.Player.totalCampaignStars ? BB.Player.totalCampaignStars() : stars) + "/30 ⭐";
     $("survivalMeta").innerText = "Best: " + (u.infiniteHighScore || 0) + " • Wave " + (u.maxWave || 1);
     $("blitzMeta").innerText = "Best: " + (u.blitzHighScore || 0);
+
+    // Update Tactical Puzzle mode meta
+    var pp = u.puzzleProgress || {};
+    var pStars = 0, pCleared = 0;
+    BB.Content.PUZZLES.forEach(function (pz) {
+      var p = pp[pz.id];
+      if (p && p.stars > 0) pCleared++;
+      if (p && p.stars) pStars += p.stars;
+    });
+    var pNext = Math.min(10, Object.keys(pp).filter(function (k) { return pp[k].unlocked; }).length);
+    var pMeta = $("puzzleMeta");
+    if (pMeta) pMeta.innerText = "Stage " + pNext + "/10 • " + pStars + "/30 ⭐";
+
     // Update Home daily banner
     var st = BB.Rewards.dailyStatus();
     var banner = $("btnHomeDaily");
@@ -88,8 +102,24 @@ BB.UI = (function () {
     wallet(); syncSettings();
   }
   function renderLevels() {
-    var g = $("mLevelsGrid"); g.innerHTML = "";
-    var stars = BB.Player.totalStars(), cleared = 0, u = BB.Save.data;
+    var isCampaign = (currentMapTab === "campaign");
+    var tabC = $("tabCampaign"), tabP = $("tabPuzzles");
+    if (tabC) tabC.classList.toggle("active", isCampaign);
+    if (tabP) tabP.classList.toggle("active", !isCampaign);
+    var contC = $("campaignMapContainer"), contP = $("puzzleMapContainer");
+    if (contC) contC.style.display = isCampaign ? "block" : "none";
+    if (contP) contP.style.display = isCampaign ? "none" : "block";
+
+    if (isCampaign) {
+      renderCampaignGrid();
+    } else {
+      renderPuzzleGrid();
+    }
+  }
+  function renderCampaignGrid() {
+    var g = $("mLevelsGrid"); if (!g) return;
+    g.innerHTML = "";
+    var stars = BB.Player.totalCampaignStars ? BB.Player.totalCampaignStars() : 0, cleared = 0, u = BB.Save.data;
     Object.keys(u.levelsProgress).forEach(function (k) { if (u.levelsProgress[k].stars > 0) cleared++; });
     $("campaignProgress").innerText = "Progress: " + stars + "/30 ⭐ • " + cleared + "/10 cleared";
     BB.Content.LEVELS.forEach(function (l) {
@@ -120,6 +150,49 @@ BB.UI = (function () {
           BB.Audio.sound.init(); BB.Audio.sound.vibrate(40);
           announce("🔒 LOCKED", "Clear previous stage first", "#ff5e7a");
         } else startLevel(parseInt(id, 10));
+      });
+      g.addEventListener("pointercancel", function () { pd = null; });
+    }
+  }
+  function renderPuzzleGrid() {
+    var g = $("mPuzzlesGrid"); if (!g) return;
+    g.innerHTML = "";
+    var u = BB.Save.data, pp = u.puzzleProgress || {};
+    var stars = 0, cleared = 0;
+    BB.Content.PUZZLES.forEach(function (pz) {
+      var p = pp[pz.id] || { unlocked: pz.id === 1, stars: 0 };
+      if (p.stars > 0) cleared++;
+      stars += (p.stars || 0);
+    });
+    $("puzzleProgress").innerText = "Progress: " + stars + "/30 ⭐ • " + cleared + "/10 cleared";
+    BB.Content.PUZZLES.forEach(function (pz) {
+      var p = pp[pz.id] || { unlocked: pz.id === 1, stars: 0 };
+      var cur = p.unlocked && !p.stars;
+      var c = document.createElement("div");
+      c.className = "m-lvl-card" + (p.unlocked ? "" : " locked") + (cur ? " current" : "");
+      c.innerHTML = '<div class="m-lvl-num">' + (p.unlocked ? pz.id : "🔒") + "</div>" +
+        '<div class="m-lvl-info"><div class="m-lvl-obj">PZ ' + pz.id + " • " + pz.name + "</div>" +
+        '<div class="m-lvl-sub">🎯 ' + pz.darts + " Dart" + (pz.darts > 1 ? "s" : "") + " • " + pz.balloons.length + " Targets</div>" +
+        '<div class="m-lvl-stars">' + (p.stars > 0 ? "⭐".repeat(p.stars) + "☆".repeat(3 - p.stars) : (p.unlocked ? "☆☆☆" : "🔒 🔒 🔒")) + "</div></div>";
+      c.dataset.pz = pz.id; c.dataset.locked = p.unlocked ? "0" : "1";
+      g.appendChild(c);
+    });
+    if (!g.dataset.bound) {
+      g.dataset.bound = "1";
+      var pd = null;
+      var pick = function (e) { return (e.target && e.target.closest) ? e.target.closest(".m-lvl-card") : null; };
+      g.addEventListener("pointerdown", function (e) {
+        var c = pick(e); pd = c ? { id: c.dataset.pz, x: e.clientX, y: e.clientY } : null;
+      });
+      g.addEventListener("pointerup", function (e) {
+        if (!pd) return;
+        var c = pick(e), dx = e.clientX - pd.x, dy = e.clientY - pd.y, id = pd.id;
+        pd = null;
+        if (!c || c.dataset.pz !== id || dx * dx + dy * dy > 14 * 14) return;
+        if (c.dataset.locked === "1") {
+          BB.Audio.sound.init(); BB.Audio.sound.vibrate(40);
+          announce("🔒 LOCKED", "Solve previous puzzle first", "#ff5e7a");
+        } else BB.Engine.startPuzzle(parseInt(id, 10));
       });
       g.addEventListener("pointercancel", function () { pd = null; });
     }
@@ -206,13 +279,19 @@ BB.UI = (function () {
     }
   }
   function showLevelComplete(r) {
+    var isPz = !!r.isPuzzle;
+    var tEl = $("mLevelCompleteTitle");
+    if (tEl) tEl.innerText = isPz ? "PUZZLE SOLVED! 🧠" : "LEVEL COMPLETE!";
     $("mLevelStars").innerText = "⭐".repeat(r.stars) + "☆".repeat(3 - r.stars);
-    $("mLevelSummary").innerText = "Objective cleared!";
+    $("mLevelSummary").innerText = isPz ? ("Cleared with " + r.time + "!") : "Objective cleared!";
     $("mLevelScoreVal").innerText = r.score;
-    $("mLevelTimeVal").innerText = r.time + "s";
+    var lbl = $("mLevelTimeLbl");
+    if (lbl) lbl.innerText = isPz ? "Darts Left" : "Time Left";
+    $("mLevelTimeVal").innerText = isPz ? r.time : (r.time + "s");
     $("mLevelRewardVal").innerText = "+" + r.coins + "🪙 +" + r.xp + "XP" + (r.levelUp ? " • LV UP!" : "");
-    $("btnNextStage").style.display = (currentLevelId < 10) ? "flex" : "none";
-    announce("🎉 STAGE CLEAR!", r.stars + " stars", "#33ff77");
+    var canNext = isPz ? (r.puzzleId < BB.Content.PUZZLES.length) : (currentLevelId < 10);
+    $("btnNextStage").style.display = canNext ? "flex" : "none";
+    announce(isPz ? "🧠 PUZZLE SOLVED!" : "🎉 STAGE CLEAR!", r.stars + " stars", isPz ? "#00f5d4" : "#33ff77");
     show("levelCompleteScreen");
   }
   function showGameOver(r) {
@@ -223,7 +302,13 @@ BB.UI = (function () {
     $("mEndBest").innerText = Math.max(BB.Save.data.blitzHighScore || 0, BB.Save.data.infiniteHighScore || 0);
     $("mNewHighBadge").style.display = r.isHigh ? "inline-block" : "none";
     $("mEndReward").innerText = "+" + r.coins + "🪙 +" + r.xp + "XP" + (r.levelUp ? " • LEVEL UP!" : "");
-    if (st.mode === "INFINITE") {
+    $("btnRetry").innerText = "▶ Replay";
+    if (r.isPuzzle || st.mode === "PUZZLE") {
+      t.innerText = "OUT OF DARTS! 🎯";
+      s.innerText = "Puzzle unsolved • " + (r.unpopped || 0) + " balloons left";
+      $("mEndWaveRow").innerText = "🧩 Tactical Puzzle " + (r.puzzleId || st.puzzle || 1);
+      $("btnRetry").innerText = "🔄 Try Again";
+    } else if (st.mode === "INFINITE") {
       t.innerText = "SURVIVAL OVER"; s.innerText = "You survived " + r.pops + " pops!";
       $("mEndWaveRow").innerText = "🌊 Reached WAVE " + r.wave + " • Best " + (BB.Save.data.maxWave || r.wave);
     } else if (st.mode === "LEVELS") {
@@ -251,10 +336,14 @@ BB.UI = (function () {
     try { BB.Music.apply(); } catch (e) {}
   }
   function bind() {
-    $("btnPlayPrimary").addEventListener("click", function () { BB.Audio.sound.init(); renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
+    $("btnPlayPrimary").addEventListener("click", function () { BB.Audio.sound.init(); currentMapTab = "campaign"; renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
     $("btnPlayBlitz").addEventListener("click", startBlitz);
     $("btnPlayInfinite").addEventListener("click", startInfinite);
-    $("btnPlayLevels").addEventListener("click", function () { renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
+    $("btnPlayLevels").addEventListener("click", function () { currentMapTab = "campaign"; renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
+    if ($("btnPlayPuzzle")) $("btnPlayPuzzle").addEventListener("click", function () { BB.Audio.sound.init(); currentMapTab = "puzzles"; renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
+    if ($("tabCampaign")) $("tabCampaign").addEventListener("click", function () { currentMapTab = "campaign"; renderLevels(); });
+    if ($("tabPuzzles")) $("tabPuzzles").addEventListener("click", function () { currentMapTab = "puzzles"; renderLevels(); });
+    if ($("hudResetPuzzleBtn")) $("hudResetPuzzleBtn").addEventListener("click", function () { BB.Engine.resetPuzzle(); });
     $("btnOpenDashboard").addEventListener("click", function () { gameState = "HOME"; show("dashboardScreen"); });
     if ($("btnOpenDashboardHeader")) $("btnOpenDashboardHeader").addEventListener("click", function () { gameState = "HOME"; show("dashboardScreen"); });
     if ($("btnOpenShopHeader1")) $("btnOpenShopHeader1").addEventListener("click", function () { gameState = "HOME"; show("shopScreen"); });
@@ -300,14 +389,25 @@ BB.UI = (function () {
     $("btnEndHome").addEventListener("click", function () { gameState = "HOME"; show("homeScreen"); });
     $("btnNextLevelMenu").addEventListener("click", function () { gameState = "HOME"; renderLevels(); show("levelSelectScreen"); });
     $("btnNextStage").addEventListener("click", function () {
-      if (currentLevelId < 10) startLevel(currentLevelId + 1);
-      else { gameState = "HOME"; show("homeScreen"); }
+      var st = BB.Engine.state();
+      if (st.mode === "PUZZLE") {
+        if (st.puzzle < BB.Content.PUZZLES.length) BB.Engine.startPuzzle(st.puzzle + 1);
+        else { gameState = "HOME"; currentMapTab = "puzzles"; renderLevels(); show("levelSelectScreen"); }
+      } else {
+        if (currentLevelId < 10) startLevel(currentLevelId + 1);
+        else { gameState = "HOME"; show("homeScreen"); }
+      }
     });
-    $("btnReplayLevel").addEventListener("click", function () { startLevel(currentLevelId); });
+    $("btnReplayLevel").addEventListener("click", function () {
+      var st = BB.Engine.state();
+      if (st.mode === "PUZZLE") BB.Engine.startPuzzle(st.puzzle);
+      else startLevel(currentLevelId);
+    });
     $("btnRetry").addEventListener("click", function () {
       var st = BB.Engine.state();
       if (st.mode === "BLITZ") startBlitz();
       else if (st.mode === "INFINITE") startInfinite();
+      else if (st.mode === "PUZZLE") BB.Engine.startPuzzle(st.puzzle);
       else startLevel(currentLevelId);
     });
     $("btnAdCoins").addEventListener("click", function () {
@@ -322,6 +422,7 @@ BB.UI = (function () {
         var st = BB.Engine.state();
         if (st.mode === "INFINITE") { startInfinite(); }
         else if (st.mode === "LEVELS") { startLevel(currentLevelId); }
+        else if (st.mode === "PUZZLE") { BB.Engine.startPuzzle(st.puzzle); }
         else { startBlitz(); }
       }, function () { announce("❌ AD NOT READY", "Try again in a bit", "#ff5e7a"); });
     });
@@ -337,6 +438,7 @@ BB.UI = (function () {
       var st = BB.Engine.state();
       if (st.mode === "BLITZ") startBlitz();
       else if (st.mode === "INFINITE") startInfinite();
+      else if (st.mode === "PUZZLE") BB.Engine.startPuzzle(st.puzzle);
       else startLevel(currentLevelId);
     });
     $("btnQuitHome").addEventListener("click", function () { gameState = "HOME"; endFever(); show("homeScreen"); });

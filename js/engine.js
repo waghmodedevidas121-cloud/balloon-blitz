@@ -5,10 +5,11 @@ var canvas, ctx, width, height, dpr;
 var gameMode = "BLITZ", gameState = "HOME";
 var score = 0, timeLeft = 60, combo = 1, maxCombo = 1, comboTimer = 0, balloonsPopped = 0;
 var lives = 3, wave = 1, currentLevelId = 1, levelProgressCount = 0, feversThisRun = 0, lifeGrace = 0;
+var currentPuzzleId = 1, puzzleDarts = 0, puzzleDartsLeft = 0, puzzleTotalBalloons = 0, puzzleActiveBalloons = 0;
 var feverCharge = 0, isFever = false, feverTimer = 0, slowMoTimer = 0;
 var shakeIntensity = 0, shakeDuration = 0, runCoins = 0;
 var mousePos = { x: 0, y: 0 };
-var balloons = [], particles = [], textPopups = [], shockwaves = [], lasers = [], powerupDrops = [];
+var balloons = [], particles = [], textPopups = [], shockwaves = [], lasers = [], powerupDrops = [], needleRays = [];
 var currentWeapon = "pistol", weaponTimer = 0, weaponShownSec = -1;
 function sound() { return BB.Audio.sound; }
 function effectsOn() { return BB.Save.data.settings.effects !== false; }
@@ -266,8 +267,29 @@ function isUiTouch(e) {
 }
 
 class MobileBalloon {
-  constructor(y) { this.reset(y === undefined ? null : y); this.spawnScale = 0; }
+  constructor(y, isPuzzle, specKey, relX, relY) {
+    this.isPuzzle = !!isPuzzle;
+    if (this.isPuzzle) {
+      this.spec = BB.Content.SPECS[specKey] || BB.Content.SPECS.RED;
+      this.radius = this.spec.r;
+      this.relX = relX;
+      this.relY = relY;
+      this.anchorX = this.relX * width;
+      this.anchorY = this.relY * height;
+      this.x = this.anchorX;
+      this.y = this.anchorY;
+      this.drawX = this.x;
+      this.speed = 0;
+      this.wobble = Math.random() * Math.PI * 2;
+      this.popped = false;
+      this.spawnScale = 0;
+    } else {
+      this.reset(y === undefined ? null : y);
+      this.spawnScale = 0;
+    }
+  }
   reset(y) {
+    if (this.isPuzzle) return;
     var SPECS = BB.Content.SPECS, r = Math.random(), c = 0, sel = SPECS.RED;
     for (var k in SPECS) { c += SPECS[k].prob; if (r <= c) { sel = SPECS[k]; break; } }
     this.spec = sel; this.radius = sel.r;
@@ -279,6 +301,15 @@ class MobileBalloon {
     this.wobble = Math.random() * 100; this.popped = false; this.spawnScale = 0;
   }
   update(dt, scale) {
+    if (this.isPuzzle) {
+      if (this.spawnScale < 1) this.spawnScale = Math.min(1, this.spawnScale + dt * 4.5);
+      this.wobble += dt * 2.0;
+      this.anchorX = this.relX * width;
+      this.anchorY = this.relY * height;
+      this.drawX = this.anchorX + Math.sin(this.wobble) * 5;
+      this.y = this.anchorY + Math.cos(this.wobble * 0.8) * 6;
+      return;
+    }
     if (this.spawnScale < 1) this.spawnScale = Math.min(1, this.spawnScale + dt * 4);
     var slowZoneY = height * 0.22;
     var inSlow = (slowMoTimer > 0 && this.y > slowZoneY && this.y < height - this.radius);
@@ -400,6 +431,28 @@ class MobileShockwave {
     ctx.restore();
   }
 }
+class MobileNeedleRay {
+  constructor(x1, y1, x2, y2, color) {
+    this.x1 = x1; this.y1 = y1; this.x2 = x2; this.y2 = y2;
+    this.color = color || "#ffffff";
+    this.life = 1;
+  }
+  update(dt) { this.life -= 4.0 * dt; }
+  draw() {
+    if (this.life <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 3.5 * this.life;
+    ctx.beginPath();
+    ctx.moveTo(this.x1, this.y1);
+    ctx.lineTo(this.x2, this.y2);
+    ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(this.x2, this.y2, 4.5 * this.life, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
 function sfxPowerup() {
   var s = sound(); if (!s.ctx || s.muted || !s.settings().sound) return;
   try {
@@ -512,7 +565,7 @@ function resetRun() {
   feverCharge = 0; isFever = false; feverTimer = 0; slowMoTimer = 0;
   feversThisRun = 0; runCoins = 0; lifeGrace = 0;
   currentWeapon = "pistol"; weaponTimer = 0; weaponShownSec = -1;
-  powerupDrops.length = 0; lasers.length = 0; shakeDuration = 0;
+  powerupDrops.length = 0; lasers.length = 0; shakeDuration = 0; needleRays.length = 0;
   document.body.classList.remove("fever-active");
   document.getElementById("mFeverBar").style.width = "0%";
   document.getElementById("mFeverPct").innerText = "0%";
@@ -544,6 +597,28 @@ function startLevel(id) {
   initBalloons(); updateHud(); BB.UI.show(null);
   BB.UI.announce("STAGE " + id, l.desc.toUpperCase(), "#00f5d4");
   textPopups.push(new MobileTextPopup("STAGE " + id + "! 🎯", width / 2, height / 2, "#00f5d4", true));
+}
+function initPuzzle(id) {
+  balloons.length = 0;
+  needleRays.length = 0;
+  var pz = (BB.Content.PUZZLES && BB.Content.PUZZLES[id - 1]) || BB.Content.PUZZLES[0];
+  puzzleDarts = pz.darts;
+  puzzleDartsLeft = pz.darts;
+  pz.balloons.forEach(function (b) {
+    balloons.push(new MobileBalloon(null, true, b.key, b.x, b.y));
+  });
+  puzzleTotalBalloons = balloons.length;
+  puzzleActiveBalloons = balloons.length;
+}
+function startPuzzle(id) {
+  sound().init();
+  try { BB.Music.play("campaign"); } catch (e) {}
+  BB.Ads.notifyRunStart(); lockInput(); currentPuzzleId = id;
+  gameMode = "PUZZLE"; gameState = "PLAYING"; resetRun();
+  initPuzzle(id); updateHud(); BB.UI.show(null);
+  var pz = BB.Content.PUZZLES[id - 1];
+  BB.UI.announce("🧩 PUZZLE " + id + ": " + pz.name.toUpperCase(), pz.desc, "#00f5d4");
+  textPopups.push(new MobileTextPopup("PUZZLE " + id + "! 🧩", width / 2, height / 2, "#00f5d4", true));
 }
 function loseLife() {
   if (gameState !== "PLAYING" || gameMode !== "INFINITE") return;
@@ -582,13 +657,83 @@ function endFever() {
   document.getElementById("mFeverLabel").innerText = "🔥 FEVER";
 }
 function earnCoins(n) { runCoins += n; BB.Economy.addCoins(n); }
-function popBalloon(b) {
+function chainPop(sourceB, targetB, delay, rayColor, depth) {
+  setTimeout(function () {
+    if (targetB && !targetB.popped && (gameState === "PLAYING" || gameState === "LEVEL_COMPLETE")) {
+      needleRays.push(new MobileNeedleRay(sourceB.drawX, sourceB.y, targetB.drawX, targetB.y, rayColor || "#ffffff"));
+      popBalloon(targetB, true, (depth || 0) + 1);
+    }
+  }, delay);
+}
+function popBalloon(b, isChain, chainDepth) {
   if (b.popped) return;
   b.popped = true; balloonsPopped++;
   BB.Save.data.totalPops++;
   BB.Rewards.track("pop", 1);
   var bx = b.drawX, by = b.y;
+  var depth = chainDepth || 1;
   addFever(b.spec.points ? b.spec.points * 0.16 : 7);
+
+  if (gameMode === "PUZZLE") {
+    if (b.spec.isBomb) {
+      sound().bomb();
+      BB.Save.data.bombsPopped = (BB.Save.data.bombsPopped || 0) + 1;
+      triggerShake(14, 0.4); BB.UI.flash(0.25);
+      shockwaves.push(new MobileShockwave(bx, by, 220, "#ff5e3a"));
+      burst(bx, by, "#ff5e3a", 20, true); burst(bx, by, "#ffd23f", 12, true);
+      textPopups.push(new MobileTextPopup("BOOM! 💥", bx, by - 20, "#ff4444", true));
+      spawnRipple(bx, by, "bomb"); earnCoins(2);
+      balloons.forEach(function (o) {
+        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < 195) {
+          chainPop(b, o, 65, "#ff5e3a", depth);
+        }
+      });
+    } else if (b.spec.isFreeze) {
+      sound().freeze();
+      burst(bx, by, "#7df9ff", 16); burst(bx, by, "#ffffff", 8);
+      shockwaves.push(new MobileShockwave(bx, by, 170, "#7df9ff"));
+      textPopups.push(new MobileTextPopup("FREEZE! ❄️", bx, by - 20, "#7df9ff", true));
+      spawnRipple(bx, by, "freeze"); earnCoins(2);
+      balloons.forEach(function (o) {
+        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < 160) {
+          chainPop(b, o, 75, "#7df9ff", depth);
+        }
+      });
+    } else if (b.spec.isGold) {
+      sound().pop(Math.min(10, depth));
+      burst(bx, by, "#ffd23f", 20, true); burst(bx, by, "#fff6c9", 10);
+      shockwaves.push(new MobileShockwave(bx, by, 180, "#ffd23f"));
+      textPopups.push(new MobileTextPopup("GOLD 8-BURST! 🟡", bx, by - 20, "#ffd700", true));
+      spawnRipple(bx, by, "gold"); earnCoins(5);
+      balloons.forEach(function (o) {
+        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < 185) {
+          chainPop(b, o, 80, "#ffd700", depth);
+        }
+      });
+    } else {
+      sound().pop(Math.min(10, depth));
+      burst(bx, by, (BB.Economy.skinColors() || {})[b.spec.key] || b.spec.color, 14);
+      spawnRipple(bx, by, ""); earnCoins(1);
+      textPopups.push(new MobileTextPopup(isChain ? "CHAIN x" + depth + "!" : "POP!", bx, by - 15, b.spec.color));
+      // Color Resonance: Chain to same-color neighbors within 145px
+      balloons.forEach(function (o) {
+        if (!o.popped && o !== b && o.spec.key === b.spec.key && Math.hypot(o.drawX - bx, o.y - by) < 145) {
+          chainPop(b, o, 90, b.spec.color, depth);
+        }
+      });
+      // Cross-Needle Sparks: Pop direct neighbors within 95px
+      balloons.forEach(function (o) {
+        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < 95) {
+          chainPop(b, o, 110, "#ffffff", depth);
+        }
+      });
+    }
+    var unp = balloons.filter(function (o) { return !o.popped; }).length;
+    puzzleActiveBalloons = unp;
+    updateHud();
+    setTimeout(checkPuzzleStatus, 450);
+    return;
+  }
   if (b.spec.isBomb) {
     sound().bomb(); BB.Save.data.bombsPopped = (BB.Save.data.bombsPopped || 0) + 1;
     triggerShake(14, 0.4); BB.UI.flash(0.25);
@@ -643,7 +788,68 @@ function popBalloon(b) {
   var fr = BB.Achievements.check();
   if (fr.length) BB.UI.announce("🏆 " + fr[0].name.toUpperCase(), "Achievement unlocked", "#ffd23f");
   BB.Save.save();
-  setTimeout(function () { b.reset(null); }, 400);
+  if (!b.isPuzzle) setTimeout(function () { b.reset(null); }, 400);
+}
+function checkPuzzleStatus() {
+  if (gameState !== "PLAYING" || gameMode !== "PUZZLE") return;
+  var unpopped = balloons.filter(function (o) { return !o.popped; }).length;
+  puzzleActiveBalloons = unpopped;
+  updateHud();
+  if (unpopped === 0) {
+    winPuzzle();
+  } else if (puzzleDartsLeft <= 0) {
+    setTimeout(function () {
+      if (gameState !== "PLAYING" || gameMode !== "PUZZLE") return;
+      var rem = balloons.filter(function (o) { return !o.popped; }).length;
+      if (rem === 0) winPuzzle();
+      else failPuzzle();
+    }, 350);
+  }
+}
+function winPuzzle() {
+  gameState = "LEVEL_COMPLETE";
+  sound().victory(); endFever();
+  var pz = BB.Content.PUZZLES[currentPuzzleId - 1];
+  var stars = (pz.darts === 1) ? 3 : (puzzleDartsLeft >= 1 ? 3 : 2);
+  var pp = BB.Save.data.puzzleProgress;
+  if (!pp) pp = BB.Save.data.puzzleProgress = { 1: { unlocked: true, stars: 0 } };
+  if (!pp[currentPuzzleId]) pp[currentPuzzleId] = { unlocked: true, stars: 0 };
+  pp[currentPuzzleId].stars = Math.max(pp[currentPuzzleId].stars, stars);
+  if (currentPuzzleId < BB.Content.PUZZLES.length) {
+    if (!pp[currentPuzzleId + 1]) pp[currentPuzzleId + 1] = { unlocked: true, stars: 0 };
+    else pp[currentPuzzleId + 1].unlocked = true;
+  }
+  var bonus = 70 + stars * 25;
+  BB.Economy.addCoins(bonus);
+  BB.Economy.addGems(stars >= 3 ? 1 : 0);
+  var rec = BB.Player.recordGame("PUZZLE", { score: 1000 * stars, pops: puzzleTotalBalloons, combo: maxCombo, wave: 0 });
+  BB.Save.save(); BB.Achievements.check();
+  BB.UI.showLevelComplete({
+    stars: stars,
+    score: 1000 * stars,
+    time: puzzleDartsLeft + " Left",
+    coins: bonus + rec.coins,
+    xp: rec.xp,
+    levelUp: rec.levelUp,
+    isPuzzle: true,
+    puzzleId: currentPuzzleId
+  });
+}
+function failPuzzle() {
+  gameState = "GAMEOVER";
+  sound().lifeLost(); endFever();
+  var unpopped = balloons.filter(function (o) { return !o.popped; }).length;
+  BB.UI.showGameOver({
+    isPuzzle: true,
+    puzzleId: currentPuzzleId,
+    score: (puzzleTotalBalloons - unpopped) * 100,
+    pops: puzzleTotalBalloons - unpopped,
+    combo: maxCombo,
+    wave: 0,
+    coins: (puzzleTotalBalloons - unpopped) * 2,
+    xp: (puzzleTotalBalloons - unpopped) * 3,
+    unpopped: unpopped
+  });
 }
 function checkLevelWin() {
   var cur = BB.Content.LEVELS[currentLevelId - 1];
@@ -689,6 +895,9 @@ function updateHud() {
   } else {
     document.body.classList.remove("combo-active");
   }
+  var resetBtn = document.getElementById("hudResetPuzzleBtn");
+  if (resetBtn) resetBtn.style.display = (gameMode === "PUZZLE") ? "flex" : "none";
+
   if (gameMode === "BLITZ") {
     document.getElementById("hudModeVal").innerText = "BLITZ";
     document.getElementById("mTargetLbl").innerText = "TIME";
@@ -704,6 +913,16 @@ function updateHud() {
     document.getElementById("mTargetLbl").innerText = "TIME";
     document.getElementById("mTargetVal").innerText = Math.ceil(timeLeft);
     document.getElementById("mobileObjBanner").innerText = "LVL " + currentLevelId + ": " + l.desc + " (" + levelProgressCount + "/" + l.target + ")";
+  } else if (gameMode === "PUZZLE") {
+    var pz = (BB.Content.PUZZLES && BB.Content.PUZZLES[currentPuzzleId - 1]) || { name: "Puzzle", darts: 1 };
+    document.getElementById("hudModeVal").innerText = "PUZZLE " + currentPuzzleId;
+    document.getElementById("mTargetLbl").innerText = "DARTS";
+    document.getElementById("mTargetVal").innerText = "🎯 " + puzzleDartsLeft;
+    var banner = document.getElementById("mobileObjBanner");
+    if (banner) {
+      banner.style.display = "block";
+      banner.innerText = "🧩 PUZZLE " + currentPuzzleId + ": " + pz.name + " (" + puzzleActiveBalloons + " left)";
+    }
   }
   updateWeaponBadge();
 }
@@ -712,6 +931,21 @@ function handleTouchAt(x, y) {
   fireAt(x, y);
 }
 function fireAt(px, py) {
+  if (gameMode === "PUZZLE") {
+    if (puzzleDartsLeft <= 0) return;
+    spawnRipple(px, py, "");
+    var hitTarget = null;
+    for (var pi = balloons.length - 1; pi >= 0; pi--) {
+      var pb = balloons[pi];
+      if (!pb.popped && pb.containsPoint(px, py)) { hitTarget = pb; break; }
+    }
+    if (hitTarget) {
+      puzzleDartsLeft--;
+      popBalloon(hitTarget);
+      updateHud();
+    }
+    return;
+  }
   for (var i = powerupDrops.length - 1; i >= 0; i--) {
     var dp = powerupDrops[i];
     if (dp.containsPoint(px, py)) { powerupDrops.splice(i, 1); collectDrop(dp); return; }
@@ -788,6 +1022,10 @@ function loop(curT) {
     if (ws !== weaponShownSec) { weaponShownSec = ws; updateWeaponBadge(); }
     if (weaponTimer <= 0) resetWeapon();
   }
+  for (var nr = needleRays.length - 1; nr >= 0; nr--) {
+    var ray = needleRays[nr]; ray.update(dt); ray.draw();
+    if (ray.life <= 0) needleRays.splice(nr, 1);
+  }
   for (var j = shockwaves.length - 1; j >= 0; j--) { var s = shockwaves[j]; s.update(dt); s.draw(); if (s.life <= 0) shockwaves.splice(j, 1); }
   for (var k = particles.length - 1; k >= 0; k--) { var p = particles[k]; p.update(dt); p.draw(); if (p.life <= 0) particles.splice(k, 1); }
   for (var t = textPopups.length - 1; t >= 0; t--) { var tp = textPopups[t]; tp.update(dt); tp.draw(); if (tp.life <= 0) textPopups.splice(t, 1); }
@@ -850,6 +1088,8 @@ BB.Engine = {
   },
   dims: function () { return { w: width, h: height }; },
   state: function () {
-    return { mode: gameMode, state: gameState, score: score, combo: combo, lives: lives, wave: wave, level: currentLevelId };
-  }
+    return { mode: gameMode, state: gameState, score: score, combo: combo, lives: lives, wave: wave, level: currentLevelId, puzzle: currentPuzzleId };
+  },
+  startPuzzle: startPuzzle,
+  resetPuzzle: function () { if (gameMode === "PUZZLE") startPuzzle(currentPuzzleId); }
 };

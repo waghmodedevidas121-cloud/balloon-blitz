@@ -4,10 +4,18 @@ BB.Player = (function () {
   var RANKS = ["NOVICE", "ROOKIE", "SKILLED", "EXPERT", "MASTER"];
   var XP_STEPS = [0, 100, 300, 700, 1500, 3000, 6000];
   function d() { return BB.Save.data; }
-  function totalStars() {
+  function totalCampaignStars() {
     var s = 0, lp = d().levelsProgress || {};
     for (var k in lp) s += (lp[k].stars || 0);
     return s;
+  }
+  function totalPuzzleStars() {
+    var s = 0, pp = d().puzzleProgress || {};
+    for (var k in pp) s += (pp[k].stars || 0);
+    return s;
+  }
+  function totalStars() {
+    return totalCampaignStars() + totalPuzzleStars();
   }
   function rank() {
     var pops = d().totalPops || 0, stars = totalStars(), idx = 0;
@@ -42,5 +50,5 @@ BB.Player = (function () {
     var lv = addXP(xp);
     return { xp: xp, coins: coins, levelUp: lv.up, level: lv.level };
   }
-  return { RANKS: RANKS, totalStars: totalStars, rank: rank, addXP: addXP, recordGame: recordGame };
+  return { RANKS: RANKS, totalStars: totalStars, totalCampaignStars: totalCampaignStars, totalPuzzleStars: totalPuzzleStars, rank: rank, addXP: addXP, recordGame: recordGame };
 })();

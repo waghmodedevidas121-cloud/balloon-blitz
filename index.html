@@ -25,6 +25,7 @@
     <div class="hud-pill" id="hudModePill"><span class="hud-pill-val" id="hudModeVal">BLITZ</span></div>
   </div>
   <div class="hud-right">
+    <button class="hud-btn-circle" id="hudResetPuzzleBtn" title="Restart Puzzle" style="display:none">🔄</button>
     <div class="hud-pill hud-score-pill"><span class="hud-pill-val" id="mScoreVal">0</span></div>
     <div class="hud-pill val-gold" id="hudComboPill"><span class="hud-pill-val" id="mComboVal">x1</span></div>
     <div class="hud-pill val-cyan" id="hudTargetPill"><span class="hud-pill-val" id="mTargetVal">60</span></div>
@@ -103,6 +104,16 @@
 
     <!-- Mode Selector Cards -->
     <div class="hh-modes">
+      <div class="hh-mode mode-puzzle" id="btnPlayPuzzle">
+        <div class="hh-mico">🧩</div>
+        <div class="hh-mode-content">
+          <div class="hh-mtitle">TACTICAL PUZZLE</div>
+          <div class="hh-mdesc">No rush • Limited darts • Chain pop!</div>
+          <div class="hh-mmeta" id="puzzleMeta">Stage 1/10 • 0/30 ⭐</div>
+        </div>
+        <div class="hh-marrow">PLAY ›</div>
+      </div>
+
       <div class="hh-mode mode-campaign" id="btnPlayLevels">
         <div class="hh-mico">🎯</div>
         <div class="hh-mode-content">
@@ -152,10 +163,22 @@
 
 <div class="overlay-view hidden" id="levelSelectScreen">
   <div class="mobile-card">
-    <h2 style="font-size:22px;font-weight:900">CAMPAIGN MAP</h2>
-    <p style="color:var(--muted);font-size:11px;margin:4px 0 6px">Level 1 → Level 10 • earn 3 stars each</p>
-    <div class="campaign-progress" id="campaignProgress"></div>
-    <div class="mobile-levels-grid" id="mLevelsGrid"></div>
+    <div class="map-mode-tabs">
+      <button class="map-tab active" id="tabCampaign">🎯 CAMPAIGN</button>
+      <button class="map-tab" id="tabPuzzles">🧩 PUZZLES</button>
+    </div>
+    <div id="campaignMapContainer">
+      <h2 style="font-size:20px;font-weight:900;margin-top:6px">CAMPAIGN MAP</h2>
+      <p style="color:var(--muted);font-size:11px;margin:4px 0 6px">Level 1 → Level 10 • earn 3 stars each</p>
+      <div class="campaign-progress" id="campaignProgress"></div>
+      <div class="mobile-levels-grid" id="mLevelsGrid"></div>
+    </div>
+    <div id="puzzleMapContainer" style="display:none">
+      <h2 style="font-size:20px;font-weight:900;margin-top:6px">TACTICAL PUZZLES</h2>
+      <p style="color:var(--muted);font-size:11px;margin:4px 0 6px">No timer • Limited darts • Trigger chain reactions!</p>
+      <div class="campaign-progress" id="puzzleProgress"></div>
+      <div class="mobile-levels-grid" id="mPuzzlesGrid"></div>
+    </div>
     <div class="mobile-actions"><button class="btn-tap" id="btnBackLevels">⬅️ Home</button></div>
   </div>
 </div>
@@ -211,12 +234,12 @@
 
 <div class="overlay-view hidden" id="levelCompleteScreen">
   <div class="mobile-card">
-    <h2 style="font-size:26px;font-weight:900;color:#33ff77">LEVEL COMPLETE!</h2>
+    <h2 style="font-size:26px;font-weight:900;color:#33ff77" id="mLevelCompleteTitle">LEVEL COMPLETE!</h2>
     <div class="result-stars" id="mLevelStars">⭐⭐⭐</div>
     <p id="mLevelSummary" style="color:#a0aec0;font-size:12px"></p>
     <div class="m-stats-grid">
       <div class="m-stat-box"><div class="m-stat-num gold" id="mLevelScoreVal">0</div><div class="m-stat-lbl">Score</div></div>
-      <div class="m-stat-box"><div class="m-stat-num" id="mLevelTimeVal">0s</div><div class="m-stat-lbl">Time Left</div></div>
+      <div class="m-stat-box"><div class="m-stat-num" id="mLevelTimeVal">0s</div><div class="m-stat-lbl" id="mLevelTimeLbl">Time Left</div></div>
     </div>
     <p style="font-size:12px;color:var(--gold);font-weight:800" id="mLevelRewardVal"></p>
     <div class="mobile-actions" style="margin-top:10px">

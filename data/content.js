@@ -13,6 +13,166 @@ BB.Content = {
     { id: 9, target: 2, time: 40, desc: "Trigger 2 Fevers", type: "fever" },
     { id: 10, target: 2000, time: 40, desc: "Score 2,000 pts", type: "score" }
   ],
+  PUZZLES: [
+    {
+      id: 1,
+      name: "The First Spark",
+      desc: "1 Dart: Pop center balloon to chain all 3!",
+      darts: 1,
+      balloons: [
+        { key: "RED", x: 0.35, y: 0.44 },
+        { key: "RED", x: 0.50, y: 0.44 },
+        { key: "RED", x: 0.65, y: 0.44 }
+      ]
+    },
+    {
+      id: 2,
+      name: "Bomb Ring",
+      desc: "1 Dart: Hit the center Bomb to blast the ring!",
+      darts: 1,
+      balloons: [
+        { key: "BOMB",  x: 0.50, y: 0.44 },
+        { key: "BLUE",  x: 0.36, y: 0.36 },
+        { key: "BLUE",  x: 0.64, y: 0.36 },
+        { key: "PINK",  x: 0.30, y: 0.44 },
+        { key: "PINK",  x: 0.70, y: 0.44 },
+        { key: "GREEN", x: 0.36, y: 0.52 },
+        { key: "GREEN", x: 0.64, y: 0.52 }
+      ]
+    },
+    {
+      id: 3,
+      name: "Color Split",
+      desc: "2 Darts: Pop Red cluster, then Blue cluster!",
+      darts: 2,
+      balloons: [
+        { key: "RED",  x: 0.28, y: 0.38 },
+        { key: "RED",  x: 0.38, y: 0.34 },
+        { key: "RED",  x: 0.38, y: 0.46 },
+        { key: "RED",  x: 0.28, y: 0.50 },
+        { key: "BLUE", x: 0.62, y: 0.34 },
+        { key: "BLUE", x: 0.72, y: 0.38 },
+        { key: "BLUE", x: 0.62, y: 0.46 },
+        { key: "BLUE", x: 0.72, y: 0.50 }
+      ]
+    },
+    {
+      id: 4,
+      name: "Crossfire",
+      desc: "2 Darts: Trigger Bomb & Freeze in sequence!",
+      darts: 2,
+      balloons: [
+        { key: "BOMB",   x: 0.50, y: 0.34 },
+        { key: "FREEZE", x: 0.50, y: 0.54 },
+        { key: "GOLD",   x: 0.50, y: 0.44 },
+        { key: "RED",    x: 0.34, y: 0.44 },
+        { key: "RED",    x: 0.66, y: 0.44 },
+        { key: "PINK",   x: 0.22, y: 0.44 },
+        { key: "PINK",   x: 0.78, y: 0.44 }
+      ]
+    },
+    {
+      id: 5,
+      name: "Gold Starburst",
+      desc: "2 Darts: Gold bursts emit 8 piercing darts!",
+      darts: 2,
+      balloons: [
+        { key: "GOLD",  x: 0.40, y: 0.42 },
+        { key: "GOLD",  x: 0.60, y: 0.42 },
+        { key: "GREEN", x: 0.25, y: 0.34 },
+        { key: "GREEN", x: 0.75, y: 0.34 },
+        { key: "BLUE",  x: 0.32, y: 0.52 },
+        { key: "BLUE",  x: 0.68, y: 0.52 },
+        { key: "PINK",  x: 0.50, y: 0.30 }
+      ]
+    },
+    {
+      id: 6,
+      name: "Domino Trail",
+      desc: "2 Darts: Trigger the chain bridge!",
+      darts: 2,
+      balloons: [
+        { key: "RED",  x: 0.22, y: 0.32 },
+        { key: "RED",  x: 0.32, y: 0.36 },
+        { key: "RED",  x: 0.42, y: 0.40 },
+        { key: "BOMB", x: 0.52, y: 0.44 },
+        { key: "BLUE", x: 0.62, y: 0.48 },
+        { key: "BLUE", x: 0.72, y: 0.52 },
+        { key: "BLUE", x: 0.80, y: 0.56 }
+      ]
+    },
+    {
+      id: 7,
+      name: "Diamond Fortress",
+      desc: "3 Darts: Outer armor protecting inner core!",
+      darts: 3,
+      balloons: [
+        { key: "GOLD",  x: 0.50, y: 0.44 },
+        { key: "BOMB",  x: 0.40, y: 0.44 },
+        { key: "BOMB",  x: 0.60, y: 0.44 },
+        { key: "RED",   x: 0.50, y: 0.34 },
+        { key: "RED",   x: 0.50, y: 0.54 },
+        { key: "PINK",  x: 0.32, y: 0.38 },
+        { key: "PINK",  x: 0.68, y: 0.38 },
+        { key: "GREEN", x: 0.32, y: 0.50 },
+        { key: "GREEN", x: 0.68, y: 0.50 }
+      ]
+    },
+    {
+      id: 8,
+      name: "Color Triangles",
+      desc: "3 Darts: 3 pure color triads. 1 dart each!",
+      darts: 3,
+      balloons: [
+        { key: "RED",  x: 0.50, y: 0.28 },
+        { key: "RED",  x: 0.42, y: 0.34 },
+        { key: "RED",  x: 0.58, y: 0.34 },
+        { key: "BLUE", x: 0.30, y: 0.48 },
+        { key: "BLUE", x: 0.22, y: 0.54 },
+        { key: "BLUE", x: 0.38, y: 0.54 },
+        { key: "PINK", x: 0.70, y: 0.48 },
+        { key: "PINK", x: 0.62, y: 0.54 },
+        { key: "PINK", x: 0.78, y: 0.54 }
+      ]
+    },
+    {
+      id: 9,
+      name: "Sub-Zero Detonation",
+      desc: "3 Darts: Shatter with Freeze to unleash the Bomb!",
+      darts: 3,
+      balloons: [
+        { key: "FREEZE", x: 0.34, y: 0.40 },
+        { key: "FREEZE", x: 0.66, y: 0.40 },
+        { key: "BOMB",   x: 0.50, y: 0.48 },
+        { key: "RED",    x: 0.22, y: 0.34 },
+        { key: "RED",    x: 0.78, y: 0.34 },
+        { key: "GREEN",  x: 0.30, y: 0.54 },
+        { key: "GREEN",  x: 0.70, y: 0.54 },
+        { key: "GOLD",   x: 0.50, y: 0.32 }
+      ]
+    },
+    {
+      id: 10,
+      name: "Grand Tactician",
+      desc: "3 Darts: 13 balloons! The master chain puzzle!",
+      darts: 3,
+      balloons: [
+        { key: "BOMB",   x: 0.50, y: 0.44 },
+        { key: "GOLD",   x: 0.38, y: 0.36 },
+        { key: "GOLD",   x: 0.62, y: 0.36 },
+        { key: "FREEZE", x: 0.38, y: 0.52 },
+        { key: "FREEZE", x: 0.62, y: 0.52 },
+        { key: "RED",    x: 0.24, y: 0.30 },
+        { key: "RED",    x: 0.76, y: 0.30 },
+        { key: "BLUE",   x: 0.24, y: 0.44 },
+        { key: "BLUE",   x: 0.76, y: 0.44 },
+        { key: "GREEN",  x: 0.24, y: 0.58 },
+        { key: "GREEN",  x: 0.76, y: 0.58 },
+        { key: "PINK",   x: 0.50, y: 0.26 },
+        { key: "PINK",   x: 0.50, y: 0.62 }
+      ]
+    }
+  ],
   SPECS: {
     RED:    { key: "RED",    color: "#ff3823", points: 10,  speed: 2.2, r: 36, prob: 0.22 },
     PINK:   { key: "PINK",   color: "#ff4da6", points: 15,  speed: 2.3, r: 36, prob: 0.20 },
