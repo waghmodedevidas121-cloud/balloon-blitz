@@ -274,8 +274,9 @@ class MobileBalloon {
     var top = (height - stageH) / 2;
     return { x: left + this.relX * stageW, y: top + this.relY * stageH };
   }
-  constructor(y, isPuzzle, specKey, relX, relY) {
+  constructor(y, isPuzzle, specKey, relX, relY, dir) {
     this.isPuzzle = !!isPuzzle;
+    this.dir = dir || "RIGHT";
     if (this.isPuzzle) {
       this.spec = BB.Content.SPECS[specKey] || BB.Content.SPECS.RED;
       this.radius = this.spec.r;
@@ -350,6 +351,11 @@ class MobileBalloon {
     drawSprite(x, y, this.radius, this.spawnScale, this.spec.key, base,
       this.spec.isBomb ? "bomb" : this.spec.isGift ? "gift" : this.spec.isGold ? "gold" : this.spec.isFreeze ? "freeze" : "normal");
 
+    // Draw directional arrow in Tactical Puzzle Mode!
+    if (this.isPuzzle && this.dir) {
+      this.drawArrow(x, y, r);
+    }
+
     // Clean bomb wick + glowing spark at top
     if (this.spec.isBomb) {
       ctx.fillStyle = "#d35400";
@@ -365,6 +371,66 @@ class MobileBalloon {
       ctx.fillStyle = "#ffeaa7";
       ctx.beginPath(); ctx.arc(sx, sy, Math.max(1, r * 0.05), 0, Math.PI * 2); ctx.fill();
     }
+
+    ctx.restore();
+  }
+  drawArrow(x, y, r) {
+    var d = this.dir;
+    if (!d || d === "ALL" || this.spec.isBomb) return;
+    ctx.save();
+    ctx.translate(x, y - r * 0.05);
+
+    if (d === "HORIZ") {
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "rgba(10, 14, 34, 0.95)";
+      ctx.lineWidth = Math.max(3, r * 0.1);
+      ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.beginPath(); ctx.moveTo(-r * 0.44, 0); ctx.lineTo(r * 0.44, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r * 0.52, 0); ctx.lineTo(r * 0.22, -r * 0.22); ctx.lineTo(r * 0.22, r * 0.22); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-r * 0.52, 0); ctx.lineTo(-r * 0.22, -r * 0.22); ctx.lineTo(-r * 0.22, r * 0.22); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.restore();
+      return;
+    }
+    if (d === "VERT") {
+      ctx.rotate(Math.PI / 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "rgba(10, 14, 34, 0.95)";
+      ctx.lineWidth = Math.max(3, r * 0.1);
+      ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.beginPath(); ctx.moveTo(-r * 0.44, 0); ctx.lineTo(r * 0.44, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r * 0.52, 0); ctx.lineTo(r * 0.22, -r * 0.22); ctx.lineTo(r * 0.22, r * 0.22); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-r * 0.52, 0); ctx.lineTo(-r * 0.22, -r * 0.22); ctx.lineTo(-r * 0.22, r * 0.22); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.restore();
+      return;
+    }
+
+    var angle = 0;
+    if (d === "RIGHT") angle = 0;
+    else if (d === "DOWN") angle = Math.PI / 2;
+    else if (d === "LEFT") angle = Math.PI;
+    else if (d === "UP") angle = -Math.PI / 2;
+
+    ctx.rotate(angle);
+    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 2;
+
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "rgba(10, 14, 34, 0.95)";
+    ctx.lineWidth = Math.max(3.2, r * 0.11);
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+
+    var aw = r * 0.52, hw = r * 0.32, sw = r * 0.14;
+    ctx.beginPath();
+    ctx.moveTo(-aw * 0.75, -sw);
+    ctx.lineTo(aw * 0.05, -sw);
+    ctx.lineTo(aw * 0.05, -hw);
+    ctx.lineTo(aw * 0.88, 0);
+    ctx.lineTo(aw * 0.05, hw);
+    ctx.lineTo(aw * 0.05, sw);
+    ctx.lineTo(-aw * 0.75, sw);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
 
     ctx.restore();
   }
@@ -614,7 +680,7 @@ function initPuzzle(id) {
   puzzleDarts = pz.darts;
   puzzleDartsLeft = pz.darts;
   pz.balloons.forEach(function (b) {
-    balloons.push(new MobileBalloon(null, true, b.key, b.x, b.y));
+    balloons.push(new MobileBalloon(null, true, b.key, b.x, b.y, b.dir));
   });
   puzzleTotalBalloons = balloons.length;
   puzzleActiveBalloons = balloons.length;
@@ -666,6 +732,45 @@ function endFever() {
   document.getElementById("mFeverLabel").innerText = "🔥 FEVER";
 }
 function earnCoins(n) { runCoins += n; BB.Economy.addCoins(n); }
+function findTargetInRay(sourceB, dx, dy) {
+  var best = null, bestDist = Infinity;
+  var corridor = sourceB.radius * 1.5;
+
+  balloons.forEach(function (o) {
+    if (o.popped || o === sourceB) return;
+    var vx = o.drawX - sourceB.drawX;
+    var vy = o.y - sourceB.y;
+    var proj = vx * dx + vy * dy;
+    if (proj <= 12) return;
+
+    var perp = Math.abs(vx * (-dy) + vy * dx);
+    if (perp <= corridor) {
+      if (proj < bestDist) {
+        bestDist = proj;
+        best = o;
+      }
+    }
+  });
+
+  return { target: best, dist: bestDist };
+}
+function fireDirectionalRay(sourceB, dx, dy, rayColor, depth) {
+  var res = findTargetInRay(sourceB, dx, dy);
+  if (res.target) {
+    var tb = res.target;
+    needleRays.push(new MobileNeedleRay(sourceB.drawX, sourceB.y, tb.drawX, tb.y, rayColor));
+    setTimeout(function () {
+      if (!tb.popped && (gameState === "PLAYING" || gameState === "LEVEL_COMPLETE")) {
+        popBalloon(tb, true, depth + 1);
+      }
+    }, 140);
+  } else {
+    var reach = Math.max(width, height) * 0.95;
+    var endX = sourceB.drawX + dx * reach;
+    var endY = sourceB.y + dy * reach;
+    needleRays.push(new MobileNeedleRay(sourceB.drawX, sourceB.y, endX, endY, rayColor));
+  }
+}
 function chainPop(sourceB, targetB, delay, rayColor, depth) {
   setTimeout(function () {
     if (targetB && !targetB.popped && (gameState === "PLAYING" || gameState === "LEVEL_COMPLETE")) {
@@ -684,66 +789,39 @@ function popBalloon(b, isChain, chainDepth) {
   addFever(b.spec.points ? b.spec.points * 0.16 : 7);
 
   if (gameMode === "PUZZLE") {
-    var stageW = Math.min(width, 420);
-    var colorDist = stageW * 0.38;
-    var sparkDist = stageW * 0.28;
-    var bombDist = stageW * 0.55;
-    var freezeDist = stageW * 0.45;
-    var goldDist = stageW * 0.50;
+    var d = b.dir || "RIGHT";
+    var rColor = (b.spec && b.spec.color) || "#ffffff";
+    sound().pop(Math.min(10, depth));
+    burst(bx, by, rColor, 14);
+    spawnRipple(bx, by, "");
+    earnCoins(1);
+    textPopups.push(new MobileTextPopup(isChain ? "CHAIN x" + depth + "!" : "POP!", bx, by - 15, rColor));
 
-    if (b.spec.isBomb) {
+    if (b.spec.isBomb || d === "ALL") {
       sound().bomb();
       BB.Save.data.bombsPopped = (BB.Save.data.bombsPopped || 0) + 1;
-      triggerShake(14, 0.4); BB.UI.flash(0.25);
-      shockwaves.push(new MobileShockwave(bx, by, bombDist, "#ff5e3a"));
-      burst(bx, by, "#ff5e3a", 20, true); burst(bx, by, "#ffd23f", 12, true);
-      textPopups.push(new MobileTextPopup("BOOM! 💥", bx, by - 20, "#ff4444", true));
-      spawnRipple(bx, by, "bomb"); earnCoins(2);
-      balloons.forEach(function (o) {
-        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < bombDist) {
-          chainPop(b, o, 65, "#ff5e3a", depth);
-        }
+      triggerShake(12, 0.35); BB.UI.flash(0.2);
+      shockwaves.push(new MobileShockwave(bx, by, 180, "#ff5e3a"));
+      var allDirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      allDirs.forEach(function (pair) {
+        fireDirectionalRay(b, pair[0], pair[1], "#ff5e3a", depth);
       });
-    } else if (b.spec.isFreeze) {
-      sound().freeze();
-      burst(bx, by, "#7df9ff", 16); burst(bx, by, "#ffffff", 8);
-      shockwaves.push(new MobileShockwave(bx, by, freezeDist, "#7df9ff"));
-      textPopups.push(new MobileTextPopup("FREEZE! ❄️", bx, by - 20, "#7df9ff", true));
-      spawnRipple(bx, by, "freeze"); earnCoins(2);
-      balloons.forEach(function (o) {
-        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < freezeDist) {
-          chainPop(b, o, 75, "#7df9ff", depth);
-        }
-      });
-    } else if (b.spec.isGold) {
-      sound().pop(Math.min(10, depth));
-      burst(bx, by, "#ffd23f", 20, true); burst(bx, by, "#fff6c9", 10);
-      shockwaves.push(new MobileShockwave(bx, by, goldDist, "#ffd23f"));
-      textPopups.push(new MobileTextPopup("GOLD 8-BURST! 🟡", bx, by - 20, "#ffd700", true));
-      spawnRipple(bx, by, "gold"); earnCoins(5);
-      balloons.forEach(function (o) {
-        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < goldDist) {
-          chainPop(b, o, 80, "#ffd700", depth);
-        }
-      });
-    } else {
-      sound().pop(Math.min(10, depth));
-      burst(bx, by, (BB.Economy.skinColors() || {})[b.spec.key] || b.spec.color, 14);
-      spawnRipple(bx, by, ""); earnCoins(1);
-      textPopups.push(new MobileTextPopup(isChain ? "CHAIN x" + depth + "!" : "POP!", bx, by - 15, b.spec.color));
-      // Color Resonance: Chain to same-color neighbors
-      balloons.forEach(function (o) {
-        if (!o.popped && o !== b && o.spec.key === b.spec.key && Math.hypot(o.drawX - bx, o.y - by) < colorDist) {
-          chainPop(b, o, 90, b.spec.color, depth);
-        }
-      });
-      // Cross-Needle Sparks: Pop direct neighbors
-      balloons.forEach(function (o) {
-        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < sparkDist) {
-          chainPop(b, o, 110, "#ffffff", depth);
-        }
-      });
+    } else if (d === "HORIZ") {
+      fireDirectionalRay(b, -1, 0, rColor, depth);
+      fireDirectionalRay(b, 1, 0, rColor, depth);
+    } else if (d === "VERT") {
+      fireDirectionalRay(b, 0, -1, rColor, depth);
+      fireDirectionalRay(b, 0, 1, rColor, depth);
+    } else if (d === "RIGHT") {
+      fireDirectionalRay(b, 1, 0, rColor, depth);
+    } else if (d === "LEFT") {
+      fireDirectionalRay(b, -1, 0, rColor, depth);
+    } else if (d === "UP") {
+      fireDirectionalRay(b, 0, -1, rColor, depth);
+    } else if (d === "DOWN") {
+      fireDirectionalRay(b, 0, 1, rColor, depth);
     }
+
     var unp = balloons.filter(function (o) { return !o.popped; }).length;
     puzzleActiveBalloons = unp;
     updateHud();

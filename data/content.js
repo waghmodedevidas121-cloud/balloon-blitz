@@ -16,160 +16,145 @@ BB.Content = {
   PUZZLES: [
     {
       id: 1,
-      name: "The First Spark",
-      desc: "1 Dart: Pop center balloon to chain all 3!",
+      name: "The First Domino",
+      desc: "1 Dart: Follow the arrows! Find the starting trigger!",
       darts: 1,
       balloons: [
-        { key: "RED", x: 0.35, y: 0.44 },
-        { key: "RED", x: 0.50, y: 0.44 },
-        { key: "RED", x: 0.65, y: 0.44 }
+        { key: "RED", x: 0.22, y: 0.45, dir: "RIGHT" },
+        { key: "RED", x: 0.50, y: 0.45, dir: "RIGHT" },
+        { key: "RED", x: 0.78, y: 0.45, dir: "UP" }
       ]
     },
     {
       id: 2,
-      name: "Bomb Ring",
-      desc: "1 Dart: Hit the center Bomb to blast the ring!",
+      name: "The Square Loop",
+      desc: "1 Dart: A continuous 4-way loop! Any node clears it!",
       darts: 1,
       balloons: [
-        { key: "BOMB",  x: 0.50, y: 0.44 },
-        { key: "BLUE",  x: 0.36, y: 0.36 },
-        { key: "BLUE",  x: 0.64, y: 0.36 },
-        { key: "PINK",  x: 0.30, y: 0.44 },
-        { key: "PINK",  x: 0.70, y: 0.44 },
-        { key: "GREEN", x: 0.36, y: 0.52 },
-        { key: "GREEN", x: 0.64, y: 0.52 }
+        { key: "BLUE", x: 0.32, y: 0.32, dir: "RIGHT" },
+        { key: "BLUE", x: 0.68, y: 0.32, dir: "DOWN" },
+        { key: "BLUE", x: 0.68, y: 0.58, dir: "LEFT" },
+        { key: "BLUE", x: 0.32, y: 0.58, dir: "UP" }
       ]
     },
     {
       id: 3,
-      name: "Color Split",
-      desc: "2 Darts: Pop Red cluster, then Blue cluster!",
-      darts: 2,
+      name: "Double Fork",
+      desc: "1 Dart: Center balloon shoots both left and right (↔️)!",
+      darts: 1,
       balloons: [
-        { key: "RED",  x: 0.28, y: 0.38 },
-        { key: "RED",  x: 0.38, y: 0.34 },
-        { key: "RED",  x: 0.38, y: 0.46 },
-        { key: "RED",  x: 0.28, y: 0.50 },
-        { key: "BLUE", x: 0.62, y: 0.34 },
-        { key: "BLUE", x: 0.72, y: 0.38 },
-        { key: "BLUE", x: 0.62, y: 0.46 },
-        { key: "BLUE", x: 0.72, y: 0.50 }
+        { key: "GOLD",  x: 0.50, y: 0.45, dir: "HORIZ" },
+        { key: "GREEN", x: 0.22, y: 0.45, dir: "UP" },
+        { key: "GREEN", x: 0.22, y: 0.26, dir: "RIGHT" },
+        { key: "PINK",  x: 0.78, y: 0.45, dir: "DOWN" },
+        { key: "PINK",  x: 0.78, y: 0.64, dir: "LEFT" }
       ]
     },
     {
       id: 4,
-      name: "Crossfire",
-      desc: "2 Darts: Trigger Bomb & Freeze in sequence!",
-      darts: 2,
+      name: "The Snake Path",
+      desc: "1 Dart: Trace backwards to find the snake head!",
+      darts: 1,
       balloons: [
-        { key: "BOMB",   x: 0.50, y: 0.34 },
-        { key: "FREEZE", x: 0.50, y: 0.54 },
-        { key: "GOLD",   x: 0.50, y: 0.44 },
-        { key: "RED",    x: 0.34, y: 0.44 },
-        { key: "RED",    x: 0.66, y: 0.44 },
-        { key: "PINK",   x: 0.22, y: 0.44 },
-        { key: "PINK",   x: 0.78, y: 0.44 }
+        { key: "RED",  x: 0.22, y: 0.32, dir: "DOWN" },
+        { key: "PINK", x: 0.78, y: 0.32, dir: "LEFT" },
+        { key: "RED",  x: 0.22, y: 0.58, dir: "RIGHT" },
+        { key: "PINK", x: 0.78, y: 0.58, dir: "UP" },
+        { key: "GOLD", x: 0.78, y: 0.45, dir: "LEFT" }
       ]
     },
     {
       id: 5,
-      name: "Gold Starburst",
-      desc: "2 Darts: Gold bursts emit 8 piercing darts!",
-      darts: 2,
+      name: "Bomb Detonator",
+      desc: "1 Dart: Guide the needle into the 4-way Bomb!",
+      darts: 1,
       balloons: [
-        { key: "GOLD",  x: 0.40, y: 0.42 },
-        { key: "GOLD",  x: 0.60, y: 0.42 },
-        { key: "GREEN", x: 0.25, y: 0.34 },
-        { key: "GREEN", x: 0.75, y: 0.34 },
-        { key: "BLUE",  x: 0.32, y: 0.52 },
-        { key: "BLUE",  x: 0.68, y: 0.52 },
-        { key: "PINK",  x: 0.50, y: 0.30 }
+        { key: "BOMB",  x: 0.50, y: 0.45, dir: "ALL" },
+        { key: "RED",   x: 0.50, y: 0.24, dir: "DOWN" },
+        { key: "BLUE",  x: 0.22, y: 0.45, dir: "DOWN" },
+        { key: "BLUE",  x: 0.22, y: 0.66, dir: "RIGHT" },
+        { key: "GREEN", x: 0.78, y: 0.45, dir: "UP" },
+        { key: "GREEN", x: 0.78, y: 0.24, dir: "LEFT" },
+        { key: "PINK",  x: 0.50, y: 0.66, dir: "LEFT" }
       ]
     },
     {
       id: 6,
-      name: "Domino Trail",
-      desc: "2 Darts: Trigger the chain bridge!",
+      name: "Twin Circuits",
+      desc: "2 Darts: Two separate arrow circuits!",
       darts: 2,
       balloons: [
-        { key: "RED",  x: 0.22, y: 0.32 },
-        { key: "RED",  x: 0.32, y: 0.36 },
-        { key: "RED",  x: 0.42, y: 0.40 },
-        { key: "BOMB", x: 0.52, y: 0.44 },
-        { key: "BLUE", x: 0.62, y: 0.48 },
-        { key: "BLUE", x: 0.72, y: 0.52 },
-        { key: "BLUE", x: 0.80, y: 0.56 }
+        { key: "RED",  x: 0.30, y: 0.30, dir: "DOWN" },
+        { key: "RED",  x: 0.30, y: 0.45, dir: "DOWN" },
+        { key: "RED",  x: 0.30, y: 0.60, dir: "RIGHT" },
+        { key: "BLUE", x: 0.70, y: 0.60, dir: "UP" },
+        { key: "BLUE", x: 0.70, y: 0.45, dir: "UP" },
+        { key: "BLUE", x: 0.70, y: 0.30, dir: "LEFT" }
       ]
     },
     {
       id: 7,
-      name: "Diamond Fortress",
-      desc: "3 Darts: Outer armor protecting inner core!",
-      darts: 3,
+      name: "Crossfire Split",
+      desc: "2 Darts: Master vertical (↕️) and horizontal (↔️) beamers!",
+      darts: 2,
       balloons: [
-        { key: "GOLD",  x: 0.50, y: 0.44 },
-        { key: "BOMB",  x: 0.40, y: 0.44 },
-        { key: "BOMB",  x: 0.60, y: 0.44 },
-        { key: "RED",   x: 0.50, y: 0.34 },
-        { key: "RED",   x: 0.50, y: 0.54 },
-        { key: "PINK",  x: 0.32, y: 0.38 },
-        { key: "PINK",  x: 0.68, y: 0.38 },
-        { key: "GREEN", x: 0.32, y: 0.50 },
-        { key: "GREEN", x: 0.68, y: 0.50 }
+        { key: "GOLD",  x: 0.50, y: 0.45, dir: "VERT" },
+        { key: "GOLD",  x: 0.50, y: 0.30, dir: "HORIZ" },
+        { key: "PINK",  x: 0.50, y: 0.16, dir: "LEFT" },
+        { key: "PINK",  x: 0.50, y: 0.62, dir: "RIGHT" },
+        { key: "GREEN", x: 0.22, y: 0.30, dir: "DOWN" },
+        { key: "GREEN", x: 0.78, y: 0.30, dir: "DOWN" },
+        { key: "BLUE",  x: 0.78, y: 0.62, dir: "LEFT" }
       ]
     },
     {
       id: 8,
-      name: "Color Triangles",
-      desc: "3 Darts: 3 pure color triads. 1 dart each!",
-      darts: 3,
+      name: "The Matrix",
+      desc: "2 Darts: Navigate through the grid circuit!",
+      darts: 2,
       balloons: [
-        { key: "RED",  x: 0.50, y: 0.28 },
-        { key: "RED",  x: 0.42, y: 0.34 },
-        { key: "RED",  x: 0.58, y: 0.34 },
-        { key: "BLUE", x: 0.30, y: 0.48 },
-        { key: "BLUE", x: 0.22, y: 0.54 },
-        { key: "BLUE", x: 0.38, y: 0.54 },
-        { key: "PINK", x: 0.70, y: 0.48 },
-        { key: "PINK", x: 0.62, y: 0.54 },
-        { key: "PINK", x: 0.78, y: 0.54 }
+        { key: "RED",   x: 0.25, y: 0.28, dir: "RIGHT" },
+        { key: "RED",   x: 0.50, y: 0.28, dir: "RIGHT" },
+        { key: "RED",   x: 0.75, y: 0.28, dir: "DOWN" },
+        { key: "BLUE",  x: 0.75, y: 0.45, dir: "LEFT" },
+        { key: "BLUE",  x: 0.50, y: 0.45, dir: "DOWN" },
+        { key: "BLUE",  x: 0.25, y: 0.45, dir: "UP" },
+        { key: "GREEN", x: 0.50, y: 0.62, dir: "RIGHT" },
+        { key: "GREEN", x: 0.75, y: 0.62, dir: "UP" }
       ]
     },
     {
       id: 9,
-      name: "Sub-Zero Detonation",
-      desc: "3 Darts: Shatter with Freeze to unleash the Bomb!",
-      darts: 3,
+      name: "Sub-Zero Cross",
+      desc: "2 Darts: Freeze shatters the row, unlocking the Bomb!",
+      darts: 2,
       balloons: [
-        { key: "FREEZE", x: 0.34, y: 0.40 },
-        { key: "FREEZE", x: 0.66, y: 0.40 },
-        { key: "BOMB",   x: 0.50, y: 0.48 },
-        { key: "RED",    x: 0.22, y: 0.34 },
-        { key: "RED",    x: 0.78, y: 0.34 },
-        { key: "GREEN",  x: 0.30, y: 0.54 },
-        { key: "GREEN",  x: 0.70, y: 0.54 },
-        { key: "GOLD",   x: 0.50, y: 0.32 }
+        { key: "FREEZE", x: 0.50, y: 0.32, dir: "HORIZ" },
+        { key: "RED",    x: 0.25, y: 0.32, dir: "DOWN" },
+        { key: "RED",    x: 0.75, y: 0.32, dir: "DOWN" },
+        { key: "BOMB",   x: 0.50, y: 0.55, dir: "ALL" },
+        { key: "GREEN",  x: 0.25, y: 0.55, dir: "RIGHT" },
+        { key: "GREEN",  x: 0.75, y: 0.55, dir: "LEFT" }
       ]
     },
     {
       id: 10,
-      name: "Grand Tactician",
-      desc: "3 Darts: 13 balloons! The master chain puzzle!",
+      name: "Grand Arrow Master",
+      desc: "3 Darts: 12 directional balloons! The ultimate puzzle!",
       darts: 3,
       balloons: [
-        { key: "BOMB",   x: 0.50, y: 0.44 },
-        { key: "GOLD",   x: 0.38, y: 0.36 },
-        { key: "GOLD",   x: 0.62, y: 0.36 },
-        { key: "FREEZE", x: 0.38, y: 0.52 },
-        { key: "FREEZE", x: 0.62, y: 0.52 },
-        { key: "RED",    x: 0.24, y: 0.30 },
-        { key: "RED",    x: 0.76, y: 0.30 },
-        { key: "BLUE",   x: 0.24, y: 0.44 },
-        { key: "BLUE",   x: 0.76, y: 0.44 },
-        { key: "GREEN",  x: 0.24, y: 0.58 },
-        { key: "GREEN",  x: 0.76, y: 0.58 },
-        { key: "PINK",   x: 0.50, y: 0.26 },
-        { key: "PINK",   x: 0.50, y: 0.62 }
+        { key: "GOLD",  x: 0.50, y: 0.44, dir: "ALL" },
+        { key: "RED",   x: 0.25, y: 0.26, dir: "RIGHT" },
+        { key: "RED",   x: 0.50, y: 0.26, dir: "RIGHT" },
+        { key: "RED",   x: 0.75, y: 0.26, dir: "DOWN" },
+        { key: "BLUE",  x: 0.75, y: 0.44, dir: "DOWN" },
+        { key: "BLUE",  x: 0.75, y: 0.62, dir: "LEFT" },
+        { key: "BLUE",  x: 0.50, y: 0.62, dir: "LEFT" },
+        { key: "GREEN", x: 0.25, y: 0.62, dir: "UP" },
+        { key: "GREEN", x: 0.25, y: 0.44, dir: "UP" },
+        { key: "PINK",  x: 0.38, y: 0.35, dir: "DOWN" },
+        { key: "PINK",  x: 0.62, y: 0.35, dir: "LEFT" },
+        { key: "PINK",  x: 0.50, y: 0.53, dir: "UP" }
       ]
     }
   ],
