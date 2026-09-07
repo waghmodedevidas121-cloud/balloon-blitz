@@ -15,6 +15,34 @@ BB.Audio = (function () {
   MobileAudio.prototype.vibrate = function (p) {
     try { if (this.settings().vibration && navigator.vibrate) navigator.vibrate(p); } catch (e) {}
   };
+  MobileAudio.prototype.wallBounce = function () {
+    this.vibrate(15);
+    if (!this.ctx || this.muted || !this.settings().sound) return;
+    try {
+      var n = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(650, n);
+      o.frequency.exponentialRampToValueAtTime(300, n + 0.08);
+      g.gain.setValueAtTime(0.2, n);
+      g.gain.exponentialRampToValueAtTime(0.001, n + 0.08);
+      o.connect(g); g.connect(this.ctx.destination);
+      o.start(n); o.stop(n + 0.08);
+    } catch (e) {}
+  };
+  MobileAudio.prototype.slingshotTwang = function () {
+    this.vibrate(25);
+    if (!this.ctx || this.muted || !this.settings().sound) return;
+    try {
+      var n = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(480, n);
+      o.frequency.exponentialRampToValueAtTime(120, n + 0.18);
+      g.gain.setValueAtTime(0.35, n);
+      g.gain.exponentialRampToValueAtTime(0.001, n + 0.18);
+      o.connect(g); g.connect(this.ctx.destination);
+      o.start(n); o.stop(n + 0.18);
+    } catch (e) {}
+  };
   MobileAudio.prototype.toggleMute = function () { this.muted = !this.muted; return this.muted; };
   MobileAudio.prototype.pop = function (i) {
     i = i || 0; this.vibrate(18);

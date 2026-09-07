@@ -730,29 +730,33 @@ class SlingshotProjectile {
     this.y = y;
     this.vx = vx;
     this.vy = vy;
-    this.radius = 12;
+    this.radius = 13;
     this.life = 4.2;
     this.trail = [];
     this.pierceCount = 0;
   }
   update(dt) {
     this.life -= dt;
-    this.vy += 320 * dt;
+    this.vy += 340 * dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
     if (this.x < this.radius) {
       this.x = this.radius;
-      this.vx = -this.vx * 0.75;
+      this.vx = -this.vx * 0.78;
       triggerShake(4, 0.1);
+      sound().wallBounce();
+      burst(this.x, this.y, "#ffd000", 8);
     } else if (this.x > width - this.radius) {
       this.x = width - this.radius;
-      this.vx = -this.vx * 0.75;
+      this.vx = -this.vx * 0.78;
       triggerShake(4, 0.1);
+      sound().wallBounce();
+      burst(this.x, this.y, "#ffd000", 8);
     }
 
     this.trail.push({ x: this.x, y: this.y, a: 1 });
-    if (this.trail.length > 12) this.trail.shift();
+    if (this.trail.length > 14) this.trail.shift();
     for (var i = 0; i < this.trail.length; i++) this.trail[i].a -= dt * 2.5;
 
     for (var b = balloons.length - 1; b >= 0; b--) {
@@ -760,8 +764,22 @@ class SlingshotProjectile {
       if (!bl.popped && bl.containsPoint(this.x, this.y)) {
         this.pierceCount++;
         popBalloon(bl);
-        triggerShake(6, 0.15);
-        textPopups.push(new MobileTextPopup("PIERCE x" + this.pierceCount + "! 🏹", this.x, this.y - 20, "#ffbe0b"));
+        triggerShake(5, 0.12);
+
+        this.vx *= 0.90;
+        this.vy *= 0.90;
+
+        var bonusPts = this.pierceCount * 100;
+        score += bonusPts;
+        if (this.pierceCount === 1) {
+          textPopups.push(new MobileTextPopup("HIT! 🏹", this.x, this.y - 20, "#ffd000"));
+        } else if (this.pierceCount === 2) {
+          textPopups.push(new MobileTextPopup("DOUBLE PIERCE! 🏹 x2", this.x, this.y - 20, "#00f5d4"));
+        } else if (this.pierceCount >= 3) {
+          textPopups.push(new MobileTextPopup("TRICK SHOT! 🎯 +" + bonusPts, this.x, this.y - 20, "#ffbe0b", true));
+          sound().victory();
+        }
+        updateHud();
       }
     }
   }
@@ -813,47 +831,105 @@ class SlingshotProjectile {
   }
 }
 
-function drawSlingshot() {
-  if (gameMode !== "SLING") return;
+function getSlingshotVectors() {
   var slingX = width / 2;
   var slingY = height - 90;
-  var leftForkX = slingX - 28, leftForkY = slingY - 35;
-  var rightForkX = slingX + 28, rightForkY = slingY - 35;
+  var anchorY = slingY - 22;
+  var MAX_PULL = 82;
+
+  if (!slingshotState.dragging) {
+    return {
+      slingX: slingX,
+      slingY: slingY,
+      anchorY: anchorY,
+      pouchX: slingX,
+      pouchY: anchorY,
+      dist: 0,
+      vx: 0,
+      vy: 0,
+      active: false
+    };
+  }
+
+  var rawDx = slingshotState.curX - slingX;
+  var rawDy = slingshotState.curY - anchorY;
+
+  if (rawDy < 5) rawDy = 5;
+
+  var rawDist = Math.hypot(rawDx, rawDy);
+  var clampedDist = Math.min(MAX_PULL, rawDist);
+  var pullRatio = rawDist > 0 ? clampedDist / rawDist : 0;
+
+  var pullDx = rawDx * pullRatio;
+  var pullDy = rawDy * pullRatio;
+
+  var pouchX = slingX + pullDx;
+  var pouchY = anchorY + pullDy;
+
+  var shootDx = -pullDx;
+  var shootDy = -pullDy;
+  var shootDist = Math.hypot(shootDx, shootDy);
+
+  var powerRatio = clampedDist / MAX_PULL;
+  var speed = 360 + powerRatio * 840;
+
+  var vx = shootDist > 0 ? (shootDx / shootDist) * speed : 0;
+  var vy = shootDist > 0 ? (shootDy / shootDist) * speed : -speed;
+
+  return {
+    slingX: slingX,
+    slingY: slingY,
+    anchorY: anchorY,
+    pouchX: pouchX,
+    pouchY: pouchY,
+    dist: clampedDist,
+    vx: vx,
+    vy: vy,
+    active: clampedDist > 16
+  };
+}
+
+function drawSlingshot() {
+  if (gameMode !== "SLING") return;
+  var s = getSlingshotVectors();
+  var slingX = s.slingX;
+  var slingY = s.slingY;
+  var leftForkX = slingX - 30, leftForkY = slingY - 38;
+  var rightForkX = slingX + 30, rightForkY = slingY - 38;
 
   ctx.save();
 
-  if (slingshotState.dragging && slingshotArrowsLeft > 0) {
-    var dx = slingX - slingshotState.curX;
-    var dy = (slingY - 20) - slingshotState.curY;
-    var dist = Math.hypot(dx, dy);
-    if (dist > 15) {
-      var speed = Math.min(1050, dist * 8.5);
-      var vx = (dx / dist) * speed, vy = (dy / dist) * speed;
-      var simX = slingX, simY = slingY - 30;
-      var simVx = vx, simVy = vy;
-      var simDt = 0.035;
-      for (var s = 0; s < 18; s++) {
-        simVy += 320 * simDt;
-        simX += simVx * simDt;
-        simY += simVy * simDt;
-        if (simX < 12 || simX > width - 12) simVx = -simVx * 0.75;
-        var dotAlpha = Math.max(0.1, 1 - (s / 18));
-        ctx.fillStyle = "rgba(255, 190, 11, " + dotAlpha + ")";
-        ctx.shadowColor = "#ffbe0b";
-        ctx.shadowBlur = 6;
-        ctx.beginPath();
-        ctx.arc(simX, simY, 4 * dotAlpha, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.shadowBlur = 0;
+  if (s.active && slingshotArrowsLeft > 0) {
+    var simX = slingX, simY = s.anchorY - 15;
+    var simVx = s.vx, simVy = s.vy;
+    var simDt = 0.032;
+
+    for (var i = 0; i < 20; i++) {
+      simVy += 340 * simDt;
+      simX += simVx * simDt;
+      simY += simVy * simDt;
+      if (simX < 14) { simX = 14; simVx = -simVx * 0.78; }
+      if (simX > width - 14) { simX = width - 14; simVx = -simVx * 0.78; }
+
+      var dotAlpha = Math.max(0.12, 1 - (i / 20));
+      ctx.fillStyle = "rgba(255, 190, 11, " + dotAlpha + ")";
+      ctx.shadowColor = "#ffbe0b";
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(simX, simY, 4.5 * dotAlpha, 0, Math.PI * 2);
+      ctx.fill();
     }
+    ctx.shadowBlur = 0;
   }
 
-  var pouchX = slingshotState.dragging ? slingshotState.curX : slingX;
-  var pouchY = slingshotState.dragging ? slingshotState.curY : slingY - 20;
+  var pouchX = s.pouchX;
+  var pouchY = s.pouchY;
 
-  ctx.strokeStyle = "#3e2723";
-  ctx.lineWidth = 4;
+  var stretchRatio = s.dist / 82;
+  var bandWidth = Math.max(2.8, 5 - stretchRatio * 2);
+
+  ctx.strokeStyle = "#4e2710";
+  ctx.lineWidth = bandWidth;
   ctx.lineCap = "round";
 
   ctx.beginPath();
@@ -866,53 +942,58 @@ function drawSlingshot() {
   ctx.lineTo(pouchX, pouchY);
   ctx.stroke();
 
-  ctx.fillStyle = "#8d6e63";
-  ctx.strokeStyle = "#4e342e";
+  ctx.fillStyle = "#8d4f2b";
+  ctx.strokeStyle = "#3e1c0c";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(pouchX, pouchY, 8, 0, Math.PI * 2);
+  ctx.arc(pouchX, pouchY, 9, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   if (slingshotArrowsLeft > 0) {
     ctx.save();
-    var arrowAngle = slingshotState.dragging
-      ? Math.atan2((slingY - 20) - pouchY, slingX - pouchX)
+    var arrowAngle = s.active
+      ? Math.atan2(s.vy, s.vx)
       : -Math.PI / 2;
     ctx.translate(pouchX, pouchY);
     ctx.rotate(arrowAngle);
 
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(32, 0);
+    ctx.moveTo(-10, 0);
+    ctx.lineTo(28, 0);
     ctx.stroke();
 
     ctx.fillStyle = "#ffbe0b";
+    ctx.strokeStyle = "#1a1000";
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(38, 0);
-    ctx.lineTo(26, -6);
-    ctx.lineTo(26, 6);
+    ctx.moveTo(34, 0);
+    ctx.lineTo(20, -7);
+    ctx.lineTo(23, 0);
+    ctx.lineTo(20, 7);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
     ctx.fillStyle = "#ff2a5f";
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-6, -4);
-    ctx.lineTo(-6, 4);
+    ctx.moveTo(-10, 0);
+    ctx.lineTo(-18, -5);
+    ctx.lineTo(-15, 0);
+    ctx.lineTo(-18, 5);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
   }
 
-  ctx.shadowColor = "rgba(0,0,0,0.5)";
-  ctx.shadowBlur = 10;
+  ctx.shadowColor = "rgba(0,0,0,0.55)";
+  ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 4;
 
-  ctx.strokeStyle = "#8d4925";
-  ctx.lineWidth = 10;
+  ctx.strokeStyle = "#7c3818";
+  ctx.lineWidth = 11;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
@@ -924,13 +1005,13 @@ function drawSlingshot() {
 
   ctx.beginPath();
   ctx.moveTo(slingX, slingY);
-  ctx.lineTo(slingX, slingY + 50);
+  ctx.lineTo(slingX, slingY + 54);
   ctx.stroke();
 
-  ctx.strokeStyle = "#ffd000";
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#ffbe0b";
+  ctx.lineWidth = 3.5;
   ctx.beginPath();
-  ctx.arc(slingX, slingY + 22, 6, 0, Math.PI * 2);
+  ctx.arc(slingX, slingY + 24, 7, 0, Math.PI * 2);
   ctx.stroke();
 
   ctx.restore();
@@ -1682,17 +1763,13 @@ BB.Engine = {
     });
     window.addEventListener("pointerup", function (e) {
       if (gameMode === "SLING" && slingshotState.dragging) {
+        var s = getSlingshotVectors();
         slingshotState.dragging = false;
-        var slingX = width / 2, slingY = height - 90;
-        var dx = slingX - e.clientX, dy = (slingY - 20) - e.clientY;
-        var dist = Math.hypot(dx, dy);
-        if (dist > 18 && slingshotArrowsLeft > 0) {
+        if (s.active && slingshotArrowsLeft > 0) {
           slingshotArrowsLeft--;
-          var speed = Math.min(1100, dist * 8.5);
-          var vx = (dx / dist) * speed, vy = (dy / dist) * speed;
-          slingshotDarts.push(new SlingshotProjectile(slingX, slingY - 30, vx, vy));
-          sound().pop(1);
+          sound().slingshotTwang();
           triggerShake(5, 0.12);
+          slingshotDarts.push(new SlingshotProjectile(s.slingX, s.anchorY - 15, s.vx, s.vy));
           updateHud();
         }
         return;
