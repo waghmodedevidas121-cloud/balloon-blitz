@@ -238,6 +238,10 @@ BB.UI = (function () {
     $("btnPlayInfinite").addEventListener("click", startInfinite);
     $("btnPlayLevels").addEventListener("click", function () { renderLevels(); gameState = "HOME"; show("levelSelectScreen"); });
     $("btnOpenDashboard").addEventListener("click", function () { gameState = "HOME"; show("dashboardScreen"); });
+    if ($("btnOpenDashboardHeader")) $("btnOpenDashboardHeader").addEventListener("click", function () { gameState = "HOME"; show("dashboardScreen"); });
+    if ($("btnOpenShopHeader1")) $("btnOpenShopHeader1").addEventListener("click", function () { gameState = "HOME"; show("shopScreen"); });
+    if ($("btnOpenShopHeader2")) $("btnOpenShopHeader2").addEventListener("click", function () { gameState = "HOME"; show("shopScreen"); });
+    if ($("btnHomeDaily")) $("btnHomeDaily").addEventListener("click", function () { gameState = "HOME"; show("dailyModal"); });
     $("btnOpenSettings").addEventListener("click", function () { syncSettings(); show("settingsModal"); });
     $("btnCloseSettings").addEventListener("click", function () { show("homeScreen"); gameState = "HOME"; });
     $("btnHowTo").addEventListener("click", function () { show("howToModal"); });
