@@ -267,6 +267,13 @@ function isUiTouch(e) {
 }
 
 class MobileBalloon {
+  getPuzzleAnchor() {
+    var stageW = Math.min(width, 420);
+    var stageH = Math.min(height, 720);
+    var left = (width - stageW) / 2;
+    var top = (height - stageH) / 2;
+    return { x: left + this.relX * stageW, y: top + this.relY * stageH };
+  }
   constructor(y, isPuzzle, specKey, relX, relY) {
     this.isPuzzle = !!isPuzzle;
     if (this.isPuzzle) {
@@ -274,8 +281,9 @@ class MobileBalloon {
       this.radius = this.spec.r;
       this.relX = relX;
       this.relY = relY;
-      this.anchorX = this.relX * width;
-      this.anchorY = this.relY * height;
+      var anc = this.getPuzzleAnchor();
+      this.anchorX = anc.x;
+      this.anchorY = anc.y;
       this.x = this.anchorX;
       this.y = this.anchorY;
       this.drawX = this.x;
@@ -304,8 +312,9 @@ class MobileBalloon {
     if (this.isPuzzle) {
       if (this.spawnScale < 1) this.spawnScale = Math.min(1, this.spawnScale + dt * 4.5);
       this.wobble += dt * 2.0;
-      this.anchorX = this.relX * width;
-      this.anchorY = this.relY * height;
+      var anc = this.getPuzzleAnchor();
+      this.anchorX = anc.x;
+      this.anchorY = anc.y;
       this.drawX = this.anchorX + Math.sin(this.wobble) * 5;
       this.y = this.anchorY + Math.cos(this.wobble * 0.8) * 6;
       return;
@@ -675,38 +684,45 @@ function popBalloon(b, isChain, chainDepth) {
   addFever(b.spec.points ? b.spec.points * 0.16 : 7);
 
   if (gameMode === "PUZZLE") {
+    var stageW = Math.min(width, 420);
+    var colorDist = stageW * 0.38;
+    var sparkDist = stageW * 0.28;
+    var bombDist = stageW * 0.55;
+    var freezeDist = stageW * 0.45;
+    var goldDist = stageW * 0.50;
+
     if (b.spec.isBomb) {
       sound().bomb();
       BB.Save.data.bombsPopped = (BB.Save.data.bombsPopped || 0) + 1;
       triggerShake(14, 0.4); BB.UI.flash(0.25);
-      shockwaves.push(new MobileShockwave(bx, by, 220, "#ff5e3a"));
+      shockwaves.push(new MobileShockwave(bx, by, bombDist, "#ff5e3a"));
       burst(bx, by, "#ff5e3a", 20, true); burst(bx, by, "#ffd23f", 12, true);
       textPopups.push(new MobileTextPopup("BOOM! 💥", bx, by - 20, "#ff4444", true));
       spawnRipple(bx, by, "bomb"); earnCoins(2);
       balloons.forEach(function (o) {
-        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < 195) {
+        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < bombDist) {
           chainPop(b, o, 65, "#ff5e3a", depth);
         }
       });
     } else if (b.spec.isFreeze) {
       sound().freeze();
       burst(bx, by, "#7df9ff", 16); burst(bx, by, "#ffffff", 8);
-      shockwaves.push(new MobileShockwave(bx, by, 170, "#7df9ff"));
+      shockwaves.push(new MobileShockwave(bx, by, freezeDist, "#7df9ff"));
       textPopups.push(new MobileTextPopup("FREEZE! ❄️", bx, by - 20, "#7df9ff", true));
       spawnRipple(bx, by, "freeze"); earnCoins(2);
       balloons.forEach(function (o) {
-        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < 160) {
+        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < freezeDist) {
           chainPop(b, o, 75, "#7df9ff", depth);
         }
       });
     } else if (b.spec.isGold) {
       sound().pop(Math.min(10, depth));
       burst(bx, by, "#ffd23f", 20, true); burst(bx, by, "#fff6c9", 10);
-      shockwaves.push(new MobileShockwave(bx, by, 180, "#ffd23f"));
+      shockwaves.push(new MobileShockwave(bx, by, goldDist, "#ffd23f"));
       textPopups.push(new MobileTextPopup("GOLD 8-BURST! 🟡", bx, by - 20, "#ffd700", true));
       spawnRipple(bx, by, "gold"); earnCoins(5);
       balloons.forEach(function (o) {
-        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < 185) {
+        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < goldDist) {
           chainPop(b, o, 80, "#ffd700", depth);
         }
       });
@@ -715,15 +731,15 @@ function popBalloon(b, isChain, chainDepth) {
       burst(bx, by, (BB.Economy.skinColors() || {})[b.spec.key] || b.spec.color, 14);
       spawnRipple(bx, by, ""); earnCoins(1);
       textPopups.push(new MobileTextPopup(isChain ? "CHAIN x" + depth + "!" : "POP!", bx, by - 15, b.spec.color));
-      // Color Resonance: Chain to same-color neighbors within 145px
+      // Color Resonance: Chain to same-color neighbors
       balloons.forEach(function (o) {
-        if (!o.popped && o !== b && o.spec.key === b.spec.key && Math.hypot(o.drawX - bx, o.y - by) < 145) {
+        if (!o.popped && o !== b && o.spec.key === b.spec.key && Math.hypot(o.drawX - bx, o.y - by) < colorDist) {
           chainPop(b, o, 90, b.spec.color, depth);
         }
       });
-      // Cross-Needle Sparks: Pop direct neighbors within 95px
+      // Cross-Needle Sparks: Pop direct neighbors
       balloons.forEach(function (o) {
-        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < 95) {
+        if (!o.popped && o !== b && Math.hypot(o.drawX - bx, o.y - by) < sparkDist) {
           chainPop(b, o, 110, "#ffffff", depth);
         }
       });
