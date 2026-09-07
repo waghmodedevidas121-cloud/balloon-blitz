@@ -69,6 +69,10 @@
     </div>
     
     <div class="header-wallet">
+      <div class="wallet-pill gift" id="btnHomeDaily" title="Daily Reward">
+        <span class="wallet-icon">🎁</span>
+        <span class="wallet-val" id="dailyPillText">FREE</span>
+      </div>
       <div class="wallet-pill" id="btnOpenShopHeader1" title="Coins">
         <span class="wallet-icon">🪙</span>
         <span class="wallet-val" id="coinBal">0</span>
@@ -90,90 +94,61 @@
       <div class="hh-tag">POP • COMBO • CONQUER</div>
     </div>
 
-    <!-- Daily Reward Quick Banner (Feature!) -->
-    <div class="home-daily-banner" id="btnHomeDaily">
-      <div class="daily-banner-icon">🎁</div>
-      <div class="daily-banner-text">
-        <div class="daily-banner-title">DAILY REWARD</div>
-        <div class="daily-banner-sub">Claim free coins &amp; gems streak!</div>
-      </div>
-      <button class="daily-claim-chip">CLAIM</button>
-    </div>
-
     <!-- Big 3D Play Button -->
     <button class="hh-play" id="btnPlayPrimary">
       <span class="play-icon">▶</span> PLAY NOW
     </button>
 
-    <!-- New Featured Mode: Slingshot Shooter! -->
-    <div class="hh-featured-mode" id="btnPlaySlingshot">
-      <div class="hfm-badge">NEW MODE 🔥</div>
-      <div class="hfm-left">
-        <div class="hfm-icon">🏹</div>
-        <div class="hfm-info">
-          <div class="hfm-title">SLINGSHOT SHOOTER</div>
-          <div class="hfm-desc">Aim, pull &amp; shoot piercing darts!</div>
-          <div class="hfm-meta" id="slingMeta">Best: 0 • 5 Arrows</div>
-        </div>
-      </div>
-      <div class="hfm-btn">PLAY ›</div>
-    </div>
-
-    <!-- Mode Selector Cards -->
+    <!-- Clean 2x2 Arcade Mode Selector Cards -->
     <div class="hh-modes">
       <div class="hh-mode mode-puzzle" id="btnPlayPuzzle">
         <div class="hh-mico">🧩</div>
         <div class="hh-mode-content">
-          <div class="hh-mtitle">TACTICAL PUZZLE</div>
-          <div class="hh-mdesc">No rush • Limited darts • Chain pop!</div>
-          <div class="hh-mmeta" id="puzzleMeta">Stage 1/10 • 0/30 ⭐</div>
+          <div class="hh-mtitle">PUZZLE</div>
+          <div class="hh-mmeta" id="puzzleMeta">10 Stages</div>
         </div>
-        <div class="hh-marrow">PLAY ›</div>
+        <div class="hh-marrow">›</div>
       </div>
 
       <div class="hh-mode mode-campaign" id="btnPlayLevels">
         <div class="hh-mico">🎯</div>
         <div class="hh-mode-content">
           <div class="hh-mtitle">CAMPAIGN</div>
-          <div class="hh-mdesc">Master 10 challenging stages</div>
-          <div class="hh-mmeta" id="campaignMeta">Stage 1/10 • 0/30 ⭐</div>
+          <div class="hh-mmeta" id="campaignMeta">500 Stages</div>
         </div>
-        <div class="hh-marrow">PLAY ›</div>
+        <div class="hh-marrow">›</div>
       </div>
 
-      <div class="hh-mode mode-survival" id="btnPlayInfinite">
-        <div class="hh-mico">♾️</div>
+      <div class="hh-mode mode-slingshot" id="btnPlaySlingshot">
+        <div class="hh-mico">🏹</div>
         <div class="hh-mode-content">
-          <div class="hh-mtitle">SURVIVAL</div>
-          <div class="hh-mdesc">Survive endless waves • 3 Lives ❤️</div>
-          <div class="hh-mmeta" id="survivalMeta">Best: 0 • Wave 1</div>
+          <div class="hh-mtitle">SLINGSHOT</div>
+          <div class="hh-mmeta" id="slingMeta">Aim &amp; Shoot</div>
         </div>
-        <div class="hh-marrow">PLAY ›</div>
+        <div class="hh-marrow">›</div>
       </div>
 
       <div class="hh-mode mode-blitz" id="btnPlayBlitz">
         <div class="hh-mico">⚡</div>
         <div class="hh-mode-content">
-          <div class="hh-mtitle">60 SEC BLITZ</div>
-          <div class="hh-mdesc">Beat clock • chase high score</div>
-          <div class="hh-mmeta" id="blitzMeta">Best: 0</div>
+          <div class="hh-mtitle">BLITZ</div>
+          <div class="hh-mmeta" id="blitzMeta">60s Rush</div>
         </div>
-        <div class="hh-marrow">PLAY ›</div>
+        <div class="hh-marrow">›</div>
       </div>
+      <!-- Hidden button to keep survival event listener valid -->
+      <button id="btnPlayInfinite" style="display:none"></button>
     </div>
 
-    <!-- Career Stats Card -->
-    <div class="hh-stats">
-      <div class="stats-header">
-        <span>🏆 PLAYER STATS</span>
-        <button class="stats-view-all" id="btnOpenDashboard">VIEW PROFILE ›</button>
-      </div>
-      <div class="hh-chips">
-        <div class="hh-chip"><div class="v" id="homeBest">0</div><div class="l">High Score</div></div>
-        <div class="hh-chip"><div class="v" id="homePops">0</div><div class="l">Total Pops</div></div>
-        <div class="hh-chip"><div class="v" id="homeStars">0⭐</div><div class="l">Stars Earned</div></div>
-        <div class="hh-chip"><div class="v" id="homeCombo">x1</div><div class="l">Best Combo</div></div>
-      </div>
+    <!-- Ultra-Clean Mini Stats Bar -->
+    <div class="hh-mini-ticker">
+      <div class="hmt-item">🏆 <span id="homeBest">0</span></div>
+      <div class="hmt-dot">•</div>
+      <div class="hmt-item">⭐ <span id="homeStars">0</span></div>
+      <div class="hmt-dot">•</div>
+      <div class="hmt-item">🎈 <span id="homePops">0</span></div>
+      <button class="hmt-profile-btn" id="btnOpenDashboard">PROFILE ›</button>
+      <span id="homeCombo" style="display:none">x1</span>
     </div>
   </div>
 </div>

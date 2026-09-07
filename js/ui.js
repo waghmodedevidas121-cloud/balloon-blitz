@@ -35,8 +35,8 @@ BB.UI = (function () {
     var st = BB.Engine.state(), playing = (st.state === "PLAYING" || st.state === "PAUSED");
     if (playing) { try { BB.Engine.lockInput(); } catch (e) {} }
     $("mobileHud").style.display = playing ? "flex" : "none";
-    $("mobileBottomHud").style.display = (playing && st.mode !== "PUZZLE") ? "flex" : "none";
-    $("mobileObjBanner").style.display = (playing && (st.mode === "LEVELS" || st.mode === "PUZZLE")) ? "block" : "none";
+    $("mobileBottomHud").style.display = "none";
+    $("mobileObjBanner").style.display = "none";
     var navOn = (!playing && NAV.indexOf(id) >= 0);
     $("bottomNav").style.display = navOn ? "flex" : "none";
     document.body.classList.toggle("nav-visible", navOn);
@@ -85,21 +85,19 @@ BB.UI = (function () {
     var sMeta = $("slingMeta");
     if (sMeta) sMeta.innerText = "Best: " + (u.slingshotHighScore || 0) + " • 5 Arrows";
 
-    // Update Home daily banner
+    // Update Home daily gift pill in header
     var st = BB.Rewards.dailyStatus();
-    var banner = $("btnHomeDaily");
-    if (banner) {
-      var bTitle = banner.querySelector(".daily-banner-title");
-      var bSub = banner.querySelector(".daily-banner-sub");
-      var bChip = banner.querySelector(".daily-claim-chip");
-      if (!st.claimable) {
-        if (bTitle) bTitle.innerText = "DAY " + st.streak + " CLAIMED ✓";
-        if (bSub) bSub.innerText = "Streak: " + st.streak + " days • Next reward tomorrow!";
-        if (bChip) { bChip.innerText = "VIEW"; bChip.style.background = "rgba(255,255,255,0.15)"; bChip.style.color = "#fff"; bChip.style.border = "none"; }
+    var dPill = $("dailyPillText");
+    if (dPill) {
+      dPill.innerText = st.claimable ? "FREE" : "DAY " + st.streak;
+    }
+    var dWrap = $("btnHomeDaily");
+    if (dWrap) {
+      dWrap.style.display = "flex";
+      if (st.claimable) {
+        dWrap.classList.add("ready");
       } else {
-        if (bTitle) bTitle.innerText = "DAILY REWARD READY!";
-        if (bSub) bSub.innerText = "Day " + st.streak + " waiting • Free coins & gems!";
-        if (bChip) { bChip.innerText = "CLAIM"; bChip.style.background = "linear-gradient(180deg, #ffd000 0%, #ff8c00 100%)"; bChip.style.color = "#1c0f00"; }
+        dWrap.classList.remove("ready");
       }
     }
     wallet(); syncSettings();
