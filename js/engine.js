@@ -801,97 +801,115 @@ class SlingshotProjectile {
       ctx.stroke();
     }
     var angle = Math.atan2(this.vy, this.vx);
-    drawFantasyArrow(this.x, this.y, angle, 50, true);
+    drawFantasyArrow(this.x, this.y, angle, 54, true);
     ctx.restore();
   }
 }
 
 function drawFantasyArrow(x, y, angle, length, inFlight) {
-  var len = length || 50;
+  var len = length || 54;
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
 
-  // 1. Shaft (Dark wood from Image 1)
-  ctx.strokeStyle = "#3f2818";
-  ctx.lineWidth = 3.4;
+  // If in flight, x,y is center of projectile, so shift by -len/2
+  if (inFlight) {
+    ctx.translate(-len * 0.5, 0);
+  }
+
+  // 1. Rear Nock (sits on the string)
+  ctx.fillStyle = "#64748b";
+  ctx.beginPath();
+  ctx.rect(-3, -2.5, 4, 5);
+  ctx.fill();
+
+  // 2. Charcoal Triple-Notched Vanes (Image 1 fletching)
+  ctx.fillStyle = "#2d3748";
+  ctx.strokeStyle = "#1a202c";
+  ctx.lineWidth = 1.3;
+  ctx.lineJoin = "round";
+
+  // Top vane (Image 1 notched shape)
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(4, -9);
+  ctx.lineTo(13, -9);
+  ctx.lineTo(10, -4.5);
+  ctx.lineTo(17, -4.5);
+  ctx.lineTo(24, 0);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Bottom vane (mirrored)
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(4, 9);
+  ctx.lineTo(13, 9);
+  ctx.lineTo(10, 4.5);
+  ctx.lineTo(17, 4.5);
+  ctx.lineTo(24, 0);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // 3. Dark Wood / Bronze Arrow Shaft (Image 1)
+  ctx.strokeStyle = "#422817";
+  ctx.lineWidth = 3.6;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(-len * 0.45, 0);
-  ctx.lineTo(len * 0.36, 0);
+  ctx.moveTo(0, 0);
+  ctx.lineTo(len - 18, 0);
   ctx.stroke();
 
+  // Highlight along shaft
   ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(-len * 0.45, -0.8);
-  ctx.lineTo(len * 0.36, -0.8);
+  ctx.moveTo(3, -0.8);
+  ctx.lineTo(len - 18, -0.8);
   ctx.stroke();
 
-  // 2. Fletching (Charcoal triple-notched vanes from Image 1)
-  ctx.fillStyle = "#334155";
-  ctx.strokeStyle = "#1e293b";
-  ctx.lineWidth = 1.2;
-  // Top vane
-  ctx.beginPath();
-  ctx.moveTo(-len * 0.18, 0);
-  ctx.lineTo(-len * 0.44, -9);
-  ctx.lineTo(-len * 0.38, -4.5);
-  ctx.lineTo(-len * 0.50, -8);
-  ctx.lineTo(-len * 0.46, 0);
-  ctx.closePath();
-  ctx.fill(); ctx.stroke();
-  // Bottom vane
-  ctx.beginPath();
-  ctx.moveTo(-len * 0.18, 0);
-  ctx.lineTo(-len * 0.44, 9);
-  ctx.lineTo(-len * 0.38, 4.5);
-  ctx.lineTo(-len * 0.50, 8);
-  ctx.lineTo(-len * 0.46, 0);
-  ctx.closePath();
-  ctx.fill(); ctx.stroke();
-
-  // 3. Arrowhead Silver Collar
+  // 4. Arrowhead Silver Collar (Image 1)
+  var tipX = len - 18;
   ctx.fillStyle = "#cbd5e1";
   ctx.strokeStyle = "#475569";
   ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.rect(len * 0.33, -3.2, 5, 6.4);
+  ctx.rect(tipX - 4, -3.5, 5, 7);
   ctx.fill(); ctx.stroke();
 
-  // 4. Crystal Energy Forked Arrowhead (Image 1 signature!)
+  // 5. Dual-Pronged Crystal Energy Head (Image 1 exact signature!)
   ctx.shadowColor = "#00f5d4";
-  ctx.shadowBlur = inFlight ? 14 : 6;
+  ctx.shadowBlur = inFlight ? 14 : 8;
 
   ctx.fillStyle = "#00f5d4";
   ctx.strokeStyle = "#0891b2";
   ctx.lineWidth = 1.5;
 
-  // Upper crystal prong
+  // Upper prong
   ctx.beginPath();
-  ctx.moveTo(len * 0.36, -2);
-  ctx.lineTo(len * 0.46, -8);
-  ctx.lineTo(len * 0.65, -4);
-  ctx.lineTo(len * 0.46, -1);
+  ctx.moveTo(tipX, -2);
+  ctx.lineTo(tipX + 6, -8);
+  ctx.lineTo(tipX + 18, -4);
+  ctx.lineTo(tipX + 6, -1);
   ctx.closePath();
   ctx.fill(); ctx.stroke();
 
-  // Lower crystal prong
+  // Lower prong
   ctx.beginPath();
-  ctx.moveTo(len * 0.36, 2);
-  ctx.lineTo(len * 0.46, 8);
-  ctx.lineTo(len * 0.65, 4);
-  ctx.lineTo(len * 0.46, 1);
+  ctx.moveTo(tipX, 2);
+  ctx.lineTo(tipX + 6, 8);
+  ctx.lineTo(tipX + 18, 4);
+  ctx.lineTo(tipX + 6, 1);
   ctx.closePath();
   ctx.fill(); ctx.stroke();
 
-  // Center bright white crystal core
+  // Center bright crystal diamond
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.moveTo(len * 0.38, 0);
-  ctx.lineTo(len * 0.50, -3);
-  ctx.lineTo(len * 0.60, 0);
-  ctx.lineTo(len * 0.50, 3);
+  ctx.moveTo(tipX + 2, 0);
+  ctx.lineTo(tipX + 8, -3);
+  ctx.lineTo(tipX + 16, 0);
+  ctx.lineTo(tipX + 8, 3);
   ctx.closePath();
   ctx.fill();
 
@@ -900,9 +918,9 @@ function drawFantasyArrow(x, y, angle, length, inFlight) {
 
 function getSlingshotVectors() {
   var slingX = width / 2;
-  var slingY = height - 90;
-  var anchorY = slingY - 22;
-  var MAX_PULL = 82;
+  var slingY = height - 105;
+  var anchorY = slingY + 12;
+  var MAX_PULL = 85;
 
   if (!slingshotState.dragging) {
     return {
@@ -920,6 +938,7 @@ function getSlingshotVectors() {
 
   var rawDx = slingshotState.curX - slingX;
   var rawDy = slingshotState.curY - anchorY;
+
   if (rawDy < 5) rawDy = 5;
 
   var rawDist = Math.hypot(rawDx, rawDy);
@@ -937,7 +956,7 @@ function getSlingshotVectors() {
   var shootDist = Math.hypot(shootDx, shootDy);
 
   var powerRatio = clampedDist / MAX_PULL;
-  var speed = 380 + powerRatio * 850;
+  var speed = 400 + powerRatio * 860;
 
   var vx = shootDist > 0 ? (shootDx / shootDist) * speed : 0;
   var vy = shootDist > 0 ? (shootDy / shootDist) * speed : -speed;
@@ -961,14 +980,13 @@ function drawSlingshot() {
   var slingX = s.slingX;
   var slingY = s.slingY;
 
-  var leftTipX = slingX - 68, leftTipY = slingY - 14;
-  var rightTipX = slingX + 68, rightTipY = slingY - 14;
+  var leftTipX = slingX - 70, leftTipY = slingY + 8;
+  var rightTipX = slingX + 70, rightTipY = slingY + 8;
 
   ctx.save();
 
-  // 1. Dotted Aiming Trajectory
   if (s.active && slingshotArrowsLeft > 0) {
-    var simX = slingX, simY = s.anchorY - 15;
+    var simX = slingX, simY = slingY - 30;
     var simVx = s.vx, simVy = s.vy;
     var simDt = 0.032;
 
@@ -993,7 +1011,6 @@ function drawSlingshot() {
   var pouchX = s.pouchX;
   var pouchY = s.pouchY;
 
-  // 2. Glowing Electric Cyan Bowstring (Image 1)
   ctx.save();
   ctx.strokeStyle = "#38bdf8";
   ctx.lineWidth = 2.4;
@@ -1007,7 +1024,6 @@ function drawSlingshot() {
   ctx.lineTo(rightTipX, rightTipY);
   ctx.stroke();
 
-  // String nock ring
   ctx.fillStyle = "#ffffff";
   ctx.shadowBlur = 6;
   ctx.beginPath();
@@ -1015,98 +1031,87 @@ function drawSlingshot() {
   ctx.fill();
   ctx.restore();
 
-  // 3. The Arrow Nocked on the Bow (Image 1 Crystal Arrow)
   if (slingshotArrowsLeft > 0) {
     var arrowAngle = s.active
       ? Math.atan2(s.vy, s.vx)
       : -Math.PI / 2;
-    drawFantasyArrow(pouchX, pouchY, arrowAngle, 52, false);
+    drawFantasyArrow(pouchX, pouchY, arrowAngle, 64, false);
   }
 
-  // 4. Fantasy Recurve Bow Body (Image 1 Signature Architecture)
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowColor = "rgba(0,0,0,0.65)";
   ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 4;
 
-  // Draw Left/Right Limb function (mirrored from Image 1)
-  function drawLimb(isRight) {
+  function drawBowLimb(isRight) {
     ctx.save();
     ctx.translate(slingX, slingY);
     if (isRight) ctx.scale(-1, 1);
 
-    // Charcoal fantasy recurve limb outline
-    ctx.fillStyle = "#29303d";
+    ctx.fillStyle = "#282e3d";
     ctx.strokeStyle = "#131720";
-    ctx.lineWidth = 2.2;
+    ctx.lineWidth = 2.4;
     ctx.lineJoin = "round";
 
     ctx.beginPath();
-    ctx.moveTo(-10, 8);
-    ctx.bezierCurveTo(-26, 6, -42, -2, -52, -8);
-    // Outer fantasy horn notch
-    ctx.lineTo(-58, -3);
-    ctx.lineTo(-54, -12);
-    // Limb tip hook
-    ctx.bezierCurveTo(-62, -14, -68, -16, -68, -14);
-    ctx.lineTo(-64, -20);
-    ctx.bezierCurveTo(-56, -18, -46, -12, -36, -5);
+    ctx.moveTo(-10, 0);
+    ctx.bezierCurveTo(-24, -6, -42, -18, -54, -22);
+    ctx.lineTo(-60, -28);
+    ctx.lineTo(-62, -20);
+    ctx.bezierCurveTo(-66, -14, -70, -2, -70, 8);
+    ctx.lineTo(-65, 12);
+    ctx.bezierCurveTo(-58, 2, -48, -4, -36, -3);
     ctx.bezierCurveTo(-24, 0, -14, 2, -10, 3);
     ctx.closePath();
-    ctx.fill(); ctx.stroke();
+    ctx.fill();
+    ctx.stroke();
 
-    // Electric Cyan Inlay Stripe along the limb (Image 1 exact signature!)
     ctx.strokeStyle = "#00f5d4";
     ctx.shadowColor = "#00f5d4";
     ctx.shadowBlur = 8;
-    ctx.lineWidth = 2.2;
+    ctx.lineWidth = 2.4;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(-18, 5);
-    ctx.bezierCurveTo(-32, 2, -44, -5, -52, -10);
+    ctx.moveTo(-16, -2);
+    ctx.bezierCurveTo(-32, -8, -46, -16, -56, -20);
     ctx.stroke();
 
-    // Outer recurve glow accent
     ctx.beginPath();
-    ctx.moveTo(-54, -4);
-    ctx.lineTo(-50, -9);
+    ctx.moveTo(-56, -24);
+    ctx.lineTo(-52, -18);
     ctx.stroke();
 
-    // Bronze reinforced tip wrap (Image 1)
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#b45309";
     ctx.strokeStyle = "#78350f";
     ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.rect(-67, -19, 5, 8);
+    ctx.rect(-69, 5, 5, 8);
     ctx.fill(); ctx.stroke();
 
     ctx.restore();
   }
 
-  drawLimb(false); // Left Limb
-  drawLimb(true);  // Right Limb
+  drawBowLimb(false);
+  drawBowLimb(true);
 
-  // 5. Central Cyan Wrapped Grip (Image 1)
   ctx.save();
   ctx.translate(slingX, slingY);
   ctx.shadowColor = "#00f5d4";
   ctx.shadowBlur = 8;
 
-  // Handle base
   ctx.fillStyle = "#00f5d4";
   ctx.strokeStyle = "#0284c7";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.rect(-10, 2, 20, 10);
+  ctx.rect(-10, -5, 20, 10);
   ctx.fill(); ctx.stroke();
 
-  // Handle segmented grip straps
   ctx.strokeStyle = "#0369a1";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(-4, 2); ctx.lineTo(-4, 12);
-  ctx.moveTo(3, 2); ctx.lineTo(3, 12);
+  ctx.moveTo(-4, -5); ctx.lineTo(-4, 5);
+  ctx.moveTo(3, -5); ctx.lineTo(3, 5);
   ctx.stroke();
 
   ctx.restore();
