@@ -395,6 +395,248 @@ window.BB = window.BB || {};
         { key: "GREEN", x: 0.20, y: 0.56 },
         { key: "GREEN", x: 0.80, y: 0.56 }
       ]
+    },
+    {
+      id: 11,
+      name: "Ice Fortress",
+      desc: "3 Arrows: Shatter through barriers to reach inner targets!",
+      arrows: 3,
+      balloons: [
+        { key: "FREEZE", x: 0.50, y: 0.30 },
+        { key: "GOLD",   x: 0.50, y: 0.18 },
+        { key: "RED",    x: 0.30, y: 0.30 },
+        { key: "RED",    x: 0.70, y: 0.30 },
+        { key: "BLUE",   x: 0.40, y: 0.44 },
+        { key: "BLUE",   x: 0.60, y: 0.44 }
+      ]
+    },
+    {
+      id: 12,
+      name: "Double Wall Bank",
+      desc: "3 Arrows: Bank arrow off left and right walls for trickshots!",
+      arrows: 3,
+      balloons: [
+        { key: "GOLD",  x: 0.15, y: 0.24 },
+        { key: "GOLD",  x: 0.85, y: 0.24 },
+        { key: "BOMB",  x: 0.15, y: 0.42 },
+        { key: "BOMB",  x: 0.85, y: 0.42 },
+        { key: "RED",   x: 0.50, y: 0.20 }
+      ]
+    },
+    {
+      id: 13,
+      name: "TNT Domino Cascade",
+      desc: "2 Arrows: Trigger the explosive domino chain!",
+      arrows: 2,
+      balloons: [
+        { key: "BOMB",  x: 0.30, y: 0.48 },
+        { key: "BOMB",  x: 0.50, y: 0.36 },
+        { key: "BOMB",  x: 0.70, y: 0.24 },
+        { key: "GREEN", x: 0.20, y: 0.48 },
+        { key: "PINK",  x: 0.80, y: 0.24 },
+        { key: "GOLD",  x: 0.50, y: 0.20 }
+      ]
+    },
+    {
+      id: 14,
+      name: "The Triple Pillar",
+      desc: "3 Arrows: 3 vertical columns of pure targets!",
+      arrows: 3,
+      balloons: [
+        { key: "RED",   x: 0.25, y: 0.24 },
+        { key: "RED",   x: 0.25, y: 0.38 },
+        { key: "RED",   x: 0.25, y: 0.52 },
+        { key: "GOLD",  x: 0.50, y: 0.20 },
+        { key: "BOMB",  x: 0.50, y: 0.34 },
+        { key: "GOLD",  x: 0.50, y: 0.48 },
+        { key: "BLUE",  x: 0.75, y: 0.24 },
+        { key: "BLUE",  x: 0.75, y: 0.38 },
+        { key: "BLUE",  x: 0.75, y: 0.52 }
+      ]
+    },
+    {
+      id: 15,
+      name: "Frozen Citadel",
+      desc: "3 Arrows: Freeze blasts clear the exterior shield!",
+      arrows: 3,
+      balloons: [
+        { key: "FREEZE", x: 0.35, y: 0.35 },
+        { key: "FREEZE", x: 0.65, y: 0.35 },
+        { key: "BOMB",   x: 0.50, y: 0.46 },
+        { key: "GOLD",   x: 0.50, y: 0.22 },
+        { key: "PINK",   x: 0.20, y: 0.24 },
+        { key: "PINK",   x: 0.80, y: 0.24 },
+        { key: "GREEN",  x: 0.50, y: 0.58 }
+      ]
+    },
+    {
+      id: 16,
+      name: "The Orbiting Crown",
+      desc: "3 Arrows: Golden crown formation surrounding a TNT core!",
+      arrows: 3,
+      balloons: [
+        { key: "BOMB",  x: 0.50, y: 0.36 },
+        { key: "GOLD",  x: 0.36, y: 0.22 },
+        { key: "GOLD",  x: 0.50, y: 0.18 },
+        { key: "GOLD",  x: 0.64, y: 0.22 },
+        { key: "BLUE",  x: 0.28, y: 0.36 },
+        { key: "BLUE",  x: 0.72, y: 0.36 },
+        { key: "RED",   x: 0.36, y: 0.50 },
+        { key: "RED",   x: 0.64, y: 0.50 }
+      ]
+    },
+    {
+      id: 17,
+      name: "Ricochet Alley",
+      desc: "3 Arrows: Double bounce trickshots required!",
+      arrows: 3,
+      balloons: [
+        { key: "RED",   x: 0.16, y: 0.20 },
+        { key: "RED",   x: 0.84, y: 0.20 },
+        { key: "BLUE",  x: 0.16, y: 0.34 },
+        { key: "BLUE",  x: 0.84, y: 0.34 },
+        { key: "GOLD",  x: 0.50, y: 0.28 },
+        { key: "BOMB",  x: 0.50, y: 0.42 }
+      ]
+    },
+    {
+      id: 18,
+      name: "Sub-Zero Vault",
+      desc: "3 Arrows: Dual freeze keys to blast the vault!",
+      arrows: 3,
+      balloons: [
+        { key: "FREEZE", x: 0.30, y: 0.28 },
+        { key: "FREEZE", x: 0.70, y: 0.28 },
+        { key: "BOMB",   x: 0.50, y: 0.36 },
+        { key: "PINK",   x: 0.20, y: 0.42 },
+        { key: "PINK",   x: 0.80, y: 0.42 },
+        { key: "GOLD",   x: 0.40, y: 0.50 },
+        { key: "GOLD",   x: 0.60, y: 0.50 }
+      ]
+    },
+    {
+      id: 19,
+      name: "The Grand Matrix",
+      desc: "4 Arrows: 12 targets in a magnificent 3x4 grid!",
+      arrows: 4,
+      balloons: [
+        { key: "RED",   x: 0.25, y: 0.20 },
+        { key: "GOLD",  x: 0.50, y: 0.20 },
+        { key: "RED",   x: 0.75, y: 0.20 },
+        { key: "BLUE",  x: 0.25, y: 0.32 },
+        { key: "BOMB",  x: 0.50, y: 0.32 },
+        { key: "BLUE",  x: 0.75, y: 0.32 },
+        { key: "GREEN", x: 0.25, y: 0.44 },
+        { key: "BOMB",  x: 0.50, y: 0.44 },
+        { key: "GREEN", x: 0.75, y: 0.44 },
+        { key: "PINK",  x: 0.25, y: 0.56 },
+        { key: "GOLD",  x: 0.50, y: 0.56 },
+        { key: "PINK",  x: 0.75, y: 0.56 }
+      ]
+    },
+    {
+      id: 20,
+      name: "King Blimp Siege",
+      desc: "4 Arrows: Massive fortress with explosive defenses!",
+      arrows: 4,
+      balloons: [
+        { key: "BOMB",   x: 0.50, y: 0.36 },
+        { key: "FREEZE", x: 0.35, y: 0.24 },
+        { key: "FREEZE", x: 0.65, y: 0.24 },
+        { key: "GOLD",   x: 0.50, y: 0.18 },
+        { key: "RED",    x: 0.20, y: 0.36 },
+        { key: "RED",    x: 0.80, y: 0.36 },
+        { key: "BLUE",   x: 0.35, y: 0.48 },
+        { key: "BLUE",   x: 0.65, y: 0.48 },
+        { key: "GREEN",  x: 0.50, y: 0.56 }
+      ]
+    },
+    {
+      id: 21,
+      name: "Twin Diamond Peaks",
+      desc: "3 Arrows: Double diamond targets requiring clean center shots!",
+      arrows: 3,
+      balloons: [
+        { key: "RED",  x: 0.30, y: 0.22 },
+        { key: "GOLD", x: 0.20, y: 0.32 },
+        { key: "GOLD", x: 0.40, y: 0.32 },
+        { key: "BOMB", x: 0.30, y: 0.42 },
+        { key: "BLUE", x: 0.70, y: 0.22 },
+        { key: "GOLD", x: 0.60, y: 0.32 },
+        { key: "GOLD", x: 0.80, y: 0.32 },
+        { key: "BOMB", x: 0.70, y: 0.42 }
+      ]
+    },
+    {
+      id: 22,
+      name: "The Slalom Course",
+      desc: "3 Arrows: S-curved obstacle course testing your aim arc!",
+      arrows: 3,
+      balloons: [
+        { key: "RED",   x: 0.25, y: 0.20 },
+        { key: "BLUE",  x: 0.45, y: 0.28 },
+        { key: "BOMB",  x: 0.65, y: 0.36 },
+        { key: "GREEN", x: 0.45, y: 0.44 },
+        { key: "PINK",  x: 0.25, y: 0.52 },
+        { key: "GOLD",  x: 0.75, y: 0.22 }
+      ]
+    },
+    {
+      id: 23,
+      name: "Double Helix",
+      desc: "4 Arrows: Interlocking twin spirals of candy balloons!",
+      arrows: 4,
+      balloons: [
+        { key: "RED",   x: 0.35, y: 0.18 },
+        { key: "BLUE",  x: 0.65, y: 0.18 },
+        { key: "BOMB",  x: 0.50, y: 0.26 },
+        { key: "BLUE",  x: 0.35, y: 0.34 },
+        { key: "RED",   x: 0.65, y: 0.34 },
+        { key: "BOMB",  x: 0.50, y: 0.42 },
+        { key: "GREEN", x: 0.35, y: 0.50 },
+        { key: "PINK",  x: 0.65, y: 0.50 },
+        { key: "GOLD",  x: 0.50, y: 0.58 }
+      ]
+    },
+    {
+      id: 24,
+      name: "Explosive Crossfire",
+      desc: "4 Arrows: Quad bombs guarding the inner gold treasure!",
+      arrows: 4,
+      balloons: [
+        { key: "GOLD", x: 0.50, y: 0.36 },
+        { key: "BOMB", x: 0.50, y: 0.22 },
+        { key: "BOMB", x: 0.50, y: 0.50 },
+        { key: "BOMB", x: 0.30, y: 0.36 },
+        { key: "BOMB", x: 0.70, y: 0.36 },
+        { key: "RED",  x: 0.20, y: 0.22 },
+        { key: "RED",  x: 0.80, y: 0.22 },
+        { key: "BLUE", x: 0.20, y: 0.50 },
+        { key: "BLUE", x: 0.80, y: 0.50 }
+      ]
+    },
+    {
+      id: 25,
+      name: "Grand Archery Master",
+      desc: "5 Arrows: 15 targets! The ultimate fantasy trickshot championship!",
+      arrows: 5,
+      balloons: [
+        { key: "GOLD",   x: 0.50, y: 0.16 },
+        { key: "FREEZE", x: 0.35, y: 0.24 },
+        { key: "FREEZE", x: 0.65, y: 0.24 },
+        { key: "BOMB",   x: 0.50, y: 0.32 },
+        { key: "RED",    x: 0.20, y: 0.28 },
+        { key: "RED",    x: 0.80, y: 0.28 },
+        { key: "BLUE",   x: 0.20, y: 0.42 },
+        { key: "BLUE",   x: 0.80, y: 0.42 },
+        { key: "BOMB",   x: 0.35, y: 0.46 },
+        { key: "BOMB",   x: 0.65, y: 0.46 },
+        { key: "PINK",   x: 0.50, y: 0.46 },
+        { key: "GREEN",  x: 0.25, y: 0.56 },
+        { key: "GREEN",  x: 0.75, y: 0.56 },
+        { key: "GOLD",   x: 0.40, y: 0.58 },
+        { key: "GOLD",   x: 0.60, y: 0.58 }
+      ]
     }
   ],
   SPECS: {

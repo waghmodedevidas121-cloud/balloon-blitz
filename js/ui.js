@@ -83,7 +83,15 @@ BB.UI = (function () {
     if (pMeta) pMeta.innerText = "Stage " + pNext + "/10 • " + pStars + "/30 ⭐";
 
     var sMeta = $("slingMeta");
-    if (sMeta) sMeta.innerText = "Best: " + (u.slingshotHighScore || 0) + " • 5 Arrows";
+    var sp = u.slingshotProgress || {};
+    var sStars = 0, sCleared = 0;
+    (BB.Content.SLING_STAGES || []).forEach(function (stg) {
+      var p = sp[stg.id];
+      if (p && p.stars > 0) sCleared++;
+      if (p && p.stars) sStars += p.stars;
+    });
+    var sNext = Math.min(25, Object.keys(sp).filter(function (k) { return sp[k].unlocked; }).length);
+    if (sMeta) sMeta.innerText = "Stage " + sNext + "/25 • " + sStars + "/75 ⭐";
 
     // Update Home daily gift pill in header
     var st = BB.Rewards.dailyStatus();
@@ -386,7 +394,7 @@ BB.UI = (function () {
       if (p.stars > 0) cleared++;
       stars += (p.stars || 0);
     });
-    $("slingshotProgress").innerText = "Progress: " + stars + "/30 ⭐ • " + cleared + "/10 cleared";
+    $("slingshotProgress").innerText = "Progress: " + stars + "/75 ⭐ • " + cleared + "/25 cleared";
 
     var highestUnlocked = 1;
     (BB.Content.SLING_STAGES || []).forEach(function (stg) {

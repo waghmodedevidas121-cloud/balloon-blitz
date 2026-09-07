@@ -980,11 +980,16 @@ function drawSlingshot() {
   var slingX = s.slingX;
   var slingY = s.slingY;
 
-  var leftTipX = slingX - 70, leftTipY = slingY + 8;
-  var rightTipX = slingX + 70, rightTipY = slingY + 8;
+  var tension = Math.min(1, s.dist / 85);
+  var flexIn = tension * 6;
+  var flexBack = tension * 4;
+
+  var leftTipX = slingX - 74 + flexIn, leftTipY = slingY + 10 + flexBack;
+  var rightTipX = slingX + 74 - flexIn, rightTipY = slingY + 10 + flexBack;
 
   ctx.save();
 
+  // 1. Dotted Aiming Trajectory (Electric cyan dots from Image 1 palette)
   if (s.active && slingshotArrowsLeft > 0) {
     var simX = slingX, simY = slingY - 30;
     var simVx = s.vx, simVy = s.vy;
@@ -1011,6 +1016,7 @@ function drawSlingshot() {
   var pouchX = s.pouchX;
   var pouchY = s.pouchY;
 
+  // 2. Glowing Electric Cyan Bowstring (Image 1)
   ctx.save();
   ctx.strokeStyle = "#38bdf8";
   ctx.lineWidth = 2.4;
@@ -1024,6 +1030,7 @@ function drawSlingshot() {
   ctx.lineTo(rightTipX, rightTipY);
   ctx.stroke();
 
+  // Cyan nock ring
   ctx.fillStyle = "#ffffff";
   ctx.shadowBlur = 6;
   ctx.beginPath();
@@ -1031,6 +1038,7 @@ function drawSlingshot() {
   ctx.fill();
   ctx.restore();
 
+  // 3. Arrow loaded in the bow!
   if (slingshotArrowsLeft > 0) {
     var arrowAngle = s.active
       ? Math.atan2(s.vy, s.vx)
@@ -1038,80 +1046,101 @@ function drawSlingshot() {
     drawFantasyArrow(pouchX, pouchY, arrowAngle, 64, false);
   }
 
+  // 4. Fantasy Recurve Bow Body (Image 1 Sculpted Limbs)
   ctx.save();
+  var bowTilt = s.active ? (Math.atan2(s.vy, s.vx) + Math.PI / 2) * 0.35 : 0;
+  ctx.translate(slingX, slingY);
+  ctx.rotate(bowTilt);
+
   ctx.shadowColor = "rgba(0,0,0,0.65)";
   ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 4;
 
-  function drawBowLimb(isRight) {
+  function drawSculptedLimb(isRight) {
     ctx.save();
-    ctx.translate(slingX, slingY);
     if (isRight) ctx.scale(-1, 1);
 
-    ctx.fillStyle = "#282e3d";
-    ctx.strokeStyle = "#131720";
-    ctx.lineWidth = 2.4;
+    // Main charcoal sculpted limb spine (slender, graceful, curved)
+    ctx.strokeStyle = "#252b39";
+    ctx.lineWidth = 7.5;
+    ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
     ctx.beginPath();
     ctx.moveTo(-10, 0);
-    ctx.bezierCurveTo(-24, -6, -42, -18, -54, -22);
-    ctx.lineTo(-60, -28);
-    ctx.lineTo(-62, -20);
-    ctx.bezierCurveTo(-66, -14, -70, -2, -70, 8);
-    ctx.lineTo(-65, 12);
-    ctx.bezierCurveTo(-58, 2, -48, -4, -36, -3);
-    ctx.bezierCurveTo(-24, 0, -14, 2, -10, 3);
-    ctx.closePath();
-    ctx.fill();
+    ctx.bezierCurveTo(-26, -5, -46, -18, -62, -22);
+    ctx.bezierCurveTo(-72, -22, -78, -10, -74 + flexIn, 10 + flexBack);
     ctx.stroke();
 
+    // Dark outline rim
+    ctx.strokeStyle = "#10141d";
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    // Fantasy Horn Notches (Exact from Image 1)
+    ctx.fillStyle = "#252b39";
+    ctx.strokeStyle = "#10141d";
+    ctx.lineWidth = 1.4;
+
+    // Mid-limb fantasy horn (points forward/outward)
+    ctx.beginPath();
+    ctx.moveTo(-38, -14);
+    ctx.lineTo(-44, -25);
+    ctx.lineTo(-49, -17);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Recurve outer fantasy horn (near tip)
+    ctx.beginPath();
+    ctx.moveTo(-60, -21);
+    ctx.lineTo(-67, -32);
+    ctx.lineTo(-72, -20);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Glowing Electric Cyan Inlay Line (Image 1 magic circuit)
     ctx.strokeStyle = "#00f5d4";
     ctx.shadowColor = "#00f5d4";
     ctx.shadowBlur = 8;
     ctx.lineWidth = 2.4;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(-16, -2);
-    ctx.bezierCurveTo(-32, -8, -46, -16, -56, -20);
+    ctx.moveTo(-12, 0);
+    ctx.bezierCurveTo(-26, -4, -46, -16, -60, -20);
+    ctx.bezierCurveTo(-66, -20, -70, -10, -68 + flexIn, 4 + flexBack);
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.moveTo(-56, -24);
-    ctx.lineTo(-52, -18);
-    ctx.stroke();
-
+    // Bronze reinforced tip wrap (Image 1)
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#b45309";
     ctx.strokeStyle = "#78350f";
     ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.rect(-69, 5, 5, 8);
-    ctx.fill(); ctx.stroke();
+    var tipX = -74 + flexIn, tipY = 10 + flexBack;
+    ctx.fillRect(tipX - 3, tipY - 4, 7, 9);
+    ctx.strokeRect(tipX - 3, tipY - 4, 7, 9);
 
     ctx.restore();
   }
 
-  drawBowLimb(false);
-  drawBowLimb(true);
+  drawSculptedLimb(false);
+  drawSculptedLimb(true);
 
-  ctx.save();
-  ctx.translate(slingX, slingY);
+  // 5. Central Cyan Wrapped Grip Handle (Image 1)
   ctx.shadowColor = "#00f5d4";
-  ctx.shadowBlur = 8;
+  ctx.shadowBlur = 9;
 
   ctx.fillStyle = "#00f5d4";
   ctx.strokeStyle = "#0284c7";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.rect(-10, -5, 20, 10);
-  ctx.fill(); ctx.stroke();
+  ctx.lineWidth = 2.2;
+  ctx.fillRect(-11, -6, 22, 12);
+  ctx.strokeRect(-11, -6, 22, 12);
 
   ctx.strokeStyle = "#0369a1";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(-4, -5); ctx.lineTo(-4, 5);
-  ctx.moveTo(3, -5); ctx.lineTo(3, 5);
+  ctx.moveTo(-5, -6); ctx.lineTo(-5, 6);
+  ctx.moveTo(0, -6); ctx.lineTo(0, 6);
+  ctx.moveTo(5, -6); ctx.lineTo(5, 6);
   ctx.stroke();
 
   ctx.restore();
