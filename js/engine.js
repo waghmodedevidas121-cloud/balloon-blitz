@@ -660,7 +660,6 @@ function startInfinite() {
   BB.Save.data.gamesPlayed = (BB.Save.data.gamesPlayed || 0) + 1; BB.Save.save();
   initBalloons(); updateHud(); BB.UI.show(null);
   BB.UI.announce("♾️ SURVIVE!", "Protect 3 lives", "#a29bfe");
-  textPopups.push(new MobileTextPopup("SURVIVE & POP! ♾️", width / 2, height / 2, "#a29bfe", true));
 }
 function startLevel(id) {
   sound().init(); BB.Music.playMode("LEVELS");
@@ -671,7 +670,6 @@ function startLevel(id) {
   BB.Save.data.gamesPlayed = (BB.Save.data.gamesPlayed || 0) + 1; BB.Save.save();
   initBalloons(); updateHud(); BB.UI.show(null);
   BB.UI.announce("STAGE " + id, l.desc.toUpperCase(), "#00f5d4");
-  textPopups.push(new MobileTextPopup("STAGE " + id + "! 🎯", width / 2, height / 2, "#00f5d4", true));
 }
 function initPuzzle(id) {
   balloons.length = 0;
@@ -693,7 +691,6 @@ function startPuzzle(id) {
   initPuzzle(id); updateHud(); BB.UI.show(null);
   var pz = BB.Content.PUZZLES[id - 1];
   BB.UI.announce("🧩 PUZZLE " + id + ": " + pz.name.toUpperCase(), pz.desc, "#00f5d4");
-  textPopups.push(new MobileTextPopup("PUZZLE " + id + "! 🧩", width / 2, height / 2, "#00f5d4", true));
 }
 function loseLife() {
   if (gameState !== "PLAYING" || gameMode !== "INFINITE") return;
