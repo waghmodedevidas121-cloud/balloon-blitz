@@ -381,25 +381,37 @@ class MobileBalloon {
     ctx.translate(x, y - r * 0.05);
 
     if (d === "HORIZ") {
+      ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
       ctx.fillStyle = "#ffffff";
       ctx.strokeStyle = "rgba(10, 14, 34, 0.95)";
-      ctx.lineWidth = Math.max(3, r * 0.1);
+      ctx.lineWidth = Math.max(3.5, r * 0.11);
       ctx.lineCap = "round"; ctx.lineJoin = "round";
       ctx.beginPath(); ctx.moveTo(-r * 0.44, 0); ctx.lineTo(r * 0.44, 0); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(r * 0.52, 0); ctx.lineTo(r * 0.22, -r * 0.22); ctx.lineTo(r * 0.22, r * 0.22); ctx.closePath(); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(-r * 0.52, 0); ctx.lineTo(-r * 0.22, -r * 0.22); ctx.lineTo(-r * 0.22, r * 0.22); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#ffd000";
+      ctx.beginPath(); ctx.moveTo(r * 0.45, 0); ctx.lineTo(r * 0.24, -r * 0.14); ctx.lineTo(r * 0.24, r * 0.14); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-r * 0.45, 0); ctx.lineTo(-r * 0.24, -r * 0.14); ctx.lineTo(-r * 0.24, r * 0.14); ctx.closePath(); ctx.fill();
       ctx.restore();
       return;
     }
     if (d === "VERT") {
       ctx.rotate(Math.PI / 2);
+      ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
       ctx.fillStyle = "#ffffff";
       ctx.strokeStyle = "rgba(10, 14, 34, 0.95)";
-      ctx.lineWidth = Math.max(3, r * 0.1);
+      ctx.lineWidth = Math.max(3.5, r * 0.11);
       ctx.lineCap = "round"; ctx.lineJoin = "round";
       ctx.beginPath(); ctx.moveTo(-r * 0.44, 0); ctx.lineTo(r * 0.44, 0); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(r * 0.52, 0); ctx.lineTo(r * 0.22, -r * 0.22); ctx.lineTo(r * 0.22, r * 0.22); ctx.closePath(); ctx.fill(); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(-r * 0.52, 0); ctx.lineTo(-r * 0.22, -r * 0.22); ctx.lineTo(-r * 0.22, r * 0.22); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#ffd000";
+      ctx.beginPath(); ctx.moveTo(r * 0.45, 0); ctx.lineTo(r * 0.24, -r * 0.14); ctx.lineTo(r * 0.24, r * 0.14); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-r * 0.45, 0); ctx.lineTo(-r * 0.24, -r * 0.14); ctx.lineTo(-r * 0.24, r * 0.14); ctx.closePath(); ctx.fill();
       ctx.restore();
       return;
     }
@@ -411,26 +423,44 @@ class MobileBalloon {
     else if (d === "UP") angle = -Math.PI / 2;
 
     ctx.rotate(angle);
-    ctx.shadowColor = "rgba(0,0,0,0.6)";
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetY = 2;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 3;
 
+    // Outer 3D white badge
     ctx.fillStyle = "#ffffff";
     ctx.strokeStyle = "rgba(10, 14, 34, 0.95)";
-    ctx.lineWidth = Math.max(3.2, r * 0.11);
+    ctx.lineWidth = Math.max(3.6, r * 0.12);
     ctx.lineCap = "round"; ctx.lineJoin = "round";
 
-    var aw = r * 0.52, hw = r * 0.32, sw = r * 0.14;
+    var aw = r * 0.54, hw = r * 0.34, sw = r * 0.15;
     ctx.beginPath();
     ctx.moveTo(-aw * 0.75, -sw);
     ctx.lineTo(aw * 0.05, -sw);
     ctx.lineTo(aw * 0.05, -hw);
-    ctx.lineTo(aw * 0.88, 0);
+    ctx.lineTo(aw * 0.90, 0);
     ctx.lineTo(aw * 0.05, hw);
     ctx.lineTo(aw * 0.05, sw);
     ctx.lineTo(-aw * 0.75, sw);
     ctx.closePath();
     ctx.fill(); ctx.stroke();
+
+    // Vibrant golden-amber inner arrow core
+    ctx.shadowColor = "transparent";
+    var ag = ctx.createLinearGradient(-aw * 0.75, 0, aw * 0.90, 0);
+    ag.addColorStop(0, "#ffe066");
+    ag.addColorStop(1, "#ff9800");
+    ctx.fillStyle = ag;
+    ctx.beginPath();
+    ctx.moveTo(-aw * 0.65, -sw * 0.6);
+    ctx.lineTo(aw * 0.02, -sw * 0.6);
+    ctx.lineTo(aw * 0.02, -hw * 0.6);
+    ctx.lineTo(aw * 0.72, 0);
+    ctx.lineTo(aw * 0.02, hw * 0.6);
+    ctx.lineTo(aw * 0.02, sw * 0.6);
+    ctx.lineTo(-aw * 0.65, sw * 0.6);
+    ctx.closePath();
+    ctx.fill();
 
     ctx.restore();
   }
@@ -512,19 +542,40 @@ class MobileNeedleRay {
     this.color = color || "#ffffff";
     this.life = 1;
   }
-  update(dt) { this.life -= 4.0 * dt; }
+  update(dt) { this.life -= 3.8 * dt; }
   draw() {
     if (this.life <= 0) return;
     ctx.save();
-    ctx.globalAlpha = Math.max(0, this.life);
+    var a = Math.max(0, this.life);
+    ctx.globalAlpha = a;
+
+    // Glowing wider beam outer
     ctx.strokeStyle = this.color;
-    ctx.lineWidth = 3.5 * this.life;
+    ctx.lineWidth = Math.max(5 * a, 2);
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 12;
     ctx.beginPath();
     ctx.moveTo(this.x1, this.y1);
     ctx.lineTo(this.x2, this.y2);
     ctx.stroke();
+
+    // Piercing white core beam
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = Math.max(2.2 * a, 1);
+    ctx.beginPath();
+    ctx.moveTo(this.x1, this.y1);
+    ctx.lineTo(this.x2, this.y2);
+    ctx.stroke();
+
+    // High energy spark star at tip
     ctx.fillStyle = "#ffffff";
-    ctx.beginPath(); ctx.arc(this.x2, this.y2, 4.5 * this.life, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowColor = "#ffffff";
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(this.x2, this.y2, 5.5 * a, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   }
 }

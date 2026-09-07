@@ -553,16 +553,29 @@ BB.UI = (function () {
   }
   function decor() {
     var w = $("bgDecor");
-    var cols = ["#ff3366", "#33ccff", "#33ff77", "#ffd700", "#a29bfe", "#00f5d4"];
-    for (var i = 0; i < 7; i++) {
+    if (!w) return;
+    w.innerHTML = "";
+    var cols = ["#ff3366", "#33ccff", "#33ff77", "#ffd700", "#a29bfe", "#00f5d4", "#ff884d"];
+    for (var i = 0; i < 9; i++) {
       var d = document.createElement("div"); d.className = "bg-balloon";
-      var s = 20 + Math.random() * 34;
-      d.style.width = s + "px"; d.style.height = (s * 1.22) + "px";
-      d.style.left = (Math.random() * 96) + "vw";
-      d.style.background = "radial-gradient(circle at 32% 28%, #fff 0 12%, " + cols[i % cols.length] + " 38%, #0a0e24 92%)";
-      d.style.animationDuration = (17 + Math.random() * 10) + "s";
-      d.style.animationDelay = (-Math.random() * 18) + "s";
+      var s = 22 + Math.random() * 32;
+      d.style.width = s + "px"; d.style.height = (s * 1.25) + "px";
+      d.style.left = (Math.random() * 94) + "vw";
+      d.style.background = "radial-gradient(circle at 35% 30%, #ffffff 0%, " + cols[i % cols.length] + " 45%, #080c24 95%)";
+      d.style.opacity = (0.2 + Math.random() * 0.18).toString();
+      d.style.animationDuration = (14 + Math.random() * 12) + "s";
+      d.style.animationDelay = (-Math.random() * 20) + "s";
       w.appendChild(d);
+    }
+    for (var j = 0; j < 14; j++) {
+      var sp = document.createElement("div"); sp.className = "bg-sparkle";
+      var sz = 3 + Math.random() * 4;
+      sp.style.width = sz + "px"; sp.style.height = sz + "px";
+      sp.style.left = (Math.random() * 96) + "vw";
+      sp.style.top = (Math.random() * 85) + "vh";
+      sp.style.animationDelay = (Math.random() * 3) + "s";
+      sp.style.animationDuration = (2 + Math.random() * 2) + "s";
+      w.appendChild(sp);
     }
     var fx = $("homeFx");
     if (fx) fx.innerHTML = "";

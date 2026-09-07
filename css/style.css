@@ -63,7 +63,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   position: fixed;
-  background: radial-gradient(circle at 50% 20%, var(--bg-sky-top) 0%, var(--bg-sky-mid) 50%, var(--bg-sky-bot) 100%);
+  background: radial-gradient(circle at 50% 12%, #263878 0%, #151e4a 50%, #0a0e2a 100%);
   color: var(--white);
   font-family: var(--font-main);
 }
@@ -84,7 +84,7 @@ html, body {
   z-index: 1;
   overflow: hidden;
   pointer-events: none;
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 .bg-balloon {
@@ -92,7 +92,7 @@ html, body {
   bottom: -18vh;
   border-radius: 50% 50% 50% 50% / 42% 42% 58% 58%;
   filter: blur(1px);
-  opacity: 0.18;
+  opacity: 0.22;
   animation: floatUp linear infinite;
   will-change: transform;
 }
@@ -101,6 +101,20 @@ html, body {
   from { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-68vh) translateX(18px) rotate(6deg); }
   to { transform: translateY(-135vh) rotate(-4deg); }
+}
+
+.bg-sparkle {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px #ffbe0b, 0 0 16px #06b6d4;
+  animation: sparkleTwinkle 2.4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes sparkleTwinkle {
+  0% { transform: scale(0.3); opacity: 0.15; }
+  100% { transform: scale(1.1); opacity: 0.85; }
 }
 
 /* Fever Vignette & Screen FX */
@@ -398,20 +412,26 @@ body.fever-active #feverVignette {
   font-size: clamp(16px, 4.8vw, 22px);
   font-weight: 900;
   letter-spacing: 6px;
-  color: #c7d2fe;
+  color: #e0e7ff;
   text-indent: 6px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 0 #1e293b, 0 4px 8px rgba(0, 0, 0, 0.6);
 }
 
 .hh-logo-main {
   display: block;
-  font-size: clamp(44px, 13vw, 68px);
+  font-size: clamp(48px, 14vw, 70px);
   font-weight: 900;
-  letter-spacing: 1px;
-  background: linear-gradient(180deg, #ffffff 0%, #ffde59 30%, #ff5e36 70%, #ff0844 100%);
+  letter-spacing: 1.5px;
+  background: linear-gradient(180deg, #ffffff 0%, #fff066 22%, #ff8c00 60%, #ff0844 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 4px 0 #7e041d) drop-shadow(0 8px 18px rgba(255, 8, 68, 0.4));
+  filter: drop-shadow(0 3px 0 #b3002d) drop-shadow(0 6px 0 #590016) drop-shadow(0 12px 24px rgba(255, 8, 68, 0.45));
+  animation: logoFloat 3.6s ease-in-out infinite alternate;
+}
+
+@keyframes logoFloat {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-3px) scale(1.01); }
 }
 
 .hh-tag {
@@ -420,27 +440,28 @@ body.fever-active #feverVignette {
   font-weight: 800;
   letter-spacing: 2px;
   color: var(--gold);
-  background: rgba(255, 190, 11, 0.12);
-  border: 1px solid rgba(255, 190, 11, 0.35);
+  background: rgba(255, 190, 11, 0.15);
+  border: 1px solid rgba(255, 190, 11, 0.45);
   padding: 3px 12px;
   border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(255, 190, 11, 0.2);
 }
 
 /* Daily Reward Quick Banner */
 .home-daily-banner {
   width: 100%;
   max-width: 360px;
-  background: linear-gradient(135deg, rgba(255, 190, 11, 0.2) 0%, rgba(245, 158, 11, 0.14) 100%);
-  border: 1.5px solid rgba(255, 190, 11, 0.4);
-  border-bottom: 3px solid var(--gold-dark);
-  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 190, 11, 0.22) 0%, rgba(245, 158, 11, 0.16) 100%);
+  border: 1.5px solid rgba(255, 190, 11, 0.45);
+  border-bottom: 3.5px solid var(--gold-dark);
+  border-radius: 18px;
   padding: 8px 12px;
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 6px 16px rgba(245, 158, 11, 0.22);
   text-align: left;
   transition: transform 0.1s ease;
 }
@@ -448,7 +469,7 @@ body.fever-active #feverVignette {
 .home-daily-banner:active { transform: translateY(2px); }
 
 .daily-banner-icon {
-  font-size: 24px;
+  font-size: 26px;
   animation: dailyBounce 1.8s ease-in-out infinite;
 }
 
@@ -468,7 +489,7 @@ body.fever-active #feverVignette {
   border-radius: 12px;
   background: linear-gradient(180deg, #ffbe0b 0%, #f59e0b 100%);
   border: none;
-  border-bottom: 2px solid var(--gold-dark);
+  border-bottom: 2.5px solid var(--gold-dark);
   color: #1a1000;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
@@ -486,7 +507,7 @@ body.fever-active #feverVignette {
   color: #ffffff;
   background: linear-gradient(180deg, #34d399 0%, #10b981 55%, #059669 100%);
   border-bottom: 6px solid #047857;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45), 0 3px 0 #024734;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.45), 0 8px 24px rgba(16, 185, 129, 0.45), 0 3px 0 #024734;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -494,24 +515,37 @@ body.fever-active #feverVignette {
   gap: 10px;
   margin-bottom: 14px;
   position: relative;
+  overflow: hidden;
   transition: transform 0.08s ease, box-shadow 0.08s ease;
   text-shadow: 0 2px 0 #047857;
+  animation: playBreathe 2.8s ease-in-out infinite;
+}
+
+@keyframes playBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
 }
 
 .hh-play::after {
   content: '';
   position: absolute;
-  top: 3px;
-  left: 14px;
-  right: 14px;
-  height: 40%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.02) 100%);
-  border-radius: 14px 14px 6px 6px;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: skewX(-25deg);
+  animation: playShimmer 3.2s infinite;
   pointer-events: none;
 }
 
+@keyframes playShimmer {
+  0%, 55% { left: -100%; }
+  100% { left: 220%; }
+}
+
 .hh-play:active {
-  transform: translateY(4px);
+  transform: translateY(4px) scale(0.99);
   border-bottom: 2px solid #047857;
   box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
 }
@@ -539,7 +573,7 @@ body.fever-active #feverVignette {
   position: relative;
   min-height: 94px;
   transition: transform 0.08s ease;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
 .hh-mode:active { transform: translateY(3px); }
@@ -580,13 +614,13 @@ body.fever-active #feverVignette {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   margin-bottom: 6px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.45);
 }
 
 .hh-mode-content { flex: 1; }
