@@ -1531,7 +1531,19 @@ function popBalloon(b, isChain, chainDepth) {
   var fr = BB.Achievements.check();
   if (fr.length) BB.UI.announce("🏆 " + fr[0].name.toUpperCase(), "Achievement unlocked", "#ffd23f");
   BB.Save.save();
-  if (!b.isPuzzle) setTimeout(function () { b.reset(null); }, 400);
+  if (!b.isPuzzle && !b.isSling) setTimeout(function () { b.reset(null); }, 400);
+  if (gameMode === "SLING") {
+    setTimeout(function () {
+      if (gameState === "PLAYING" && gameMode === "SLING") {
+        var unp = balloons.filter(function (o) { return !o.popped; }).length;
+        slingshotActiveBalloons = unp;
+        updateHud();
+        if (unp === 0) {
+          winSlingshotStage();
+        }
+      }
+    }, 280);
+  }
 }
 function checkPuzzleStatus() {
   if (gameState !== "PLAYING" || gameMode !== "PUZZLE") return;
