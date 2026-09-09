@@ -60,15 +60,16 @@ BB.UI = (function () {
   function refreshHome() {
     var u = BB.Save.data, r = BB.Player.rank(), stars = BB.Player.totalStars();
     var best = Math.max(u.blitzHighScore || 0, u.infiniteHighScore || 0);
-    $("homeRank").innerText = r.name + " • Lv" + (u.plevel || 1);
-    $("homePops").innerText = u.totalPops || 0;
-    $("homeBest").innerText = best;
-    $("homeStars").innerText = stars + "⭐";
-    $("homeCombo").innerText = "x" + (u.maxCombo || 1);
+    var setT = function (id, t) { var el = $(id); if (el) el.innerText = t; };
+    setT("homeRank", r.name + " • Lv" + (u.plevel || 1));
+    setT("homePops", u.totalPops || 0);
+    setT("homeBest", best);
+    setT("homeStars", stars + "⭐");
+    setT("homeCombo", "x" + (u.maxCombo || 1));
     var un = Object.keys(u.levelsProgress || {}).filter(function (k) { return u.levelsProgress[k].unlocked; }).length;
-    $("campaignMeta").innerText = "Stage " + un + "/500 • " + (BB.Player.totalCampaignStars ? BB.Player.totalCampaignStars() : stars) + " ⭐";
-    $("survivalMeta").innerText = "Best: " + (u.infiniteHighScore || 0) + " • Wave " + (u.maxWave || 1);
-    $("blitzMeta").innerText = "Best: " + (u.blitzHighScore || 0);
+    setT("campaignMeta", "Stage " + un + "/500 • " + (BB.Player.totalCampaignStars ? BB.Player.totalCampaignStars() : stars) + " ⭐");
+    setT("survivalMeta", "Best: " + (u.infiniteHighScore || 0) + " • Wave " + (u.maxWave || 1));
+    setT("blitzMeta", "Best: " + (u.blitzHighScore || 0));
 
     // Update Tactical Puzzle mode meta
     var pp = u.puzzleProgress || {};
